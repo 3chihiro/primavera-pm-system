@@ -1,7 +1,9 @@
-import { app, BrowserWindow, Menu, dialog, ipcMain } from 'electron';
+import * as electron from 'electron';
 import * as path from 'path';
 import { isDev } from '../utils/environment';
 import { DatabaseService } from '../database/DatabaseService';
+
+const { app, BrowserWindow, Menu, dialog, ipcMain } = electron;
 
 // セキュリティ向上のためのCSP設定
 const getCSPPolicy = () => {
@@ -30,10 +32,9 @@ const getCSPPolicy = () => {
 
 class ElectronApp {
   private mainWindow: BrowserWindow | null = null;
-  private databaseService: DatabaseService;
+  private databaseService: DatabaseService | null = null;
 
   constructor() {
-    this.databaseService = new DatabaseService();
     this.initializeApp();
   }
 
@@ -41,6 +42,7 @@ class ElectronApp {
     // アプリが準備完了時の処理
     app.whenReady().then(() => {
       console.log('Electronアプリケーションが準備完了');
+      this.databaseService = new DatabaseService();
       this.createWindow();
       this.setupMenu();
       this.setupIpcHandlers();
@@ -212,6 +214,9 @@ class ElectronApp {
     // データベース操作のIPCハンドラー
     ipcMain.handle('database:initialize', async () => {
       try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
         console.log('データベース初期化を開始...');
         await this.databaseService.initialize();
         console.log('データベース初期化完了');
@@ -224,6 +229,9 @@ class ElectronApp {
 
     ipcMain.handle('database:createProject', async (event, projectData) => {
       try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
         const project = await this.databaseService.createProject(projectData);
         return { success: true, data: project };
       } catch (error) {
@@ -234,6 +242,9 @@ class ElectronApp {
 
     ipcMain.handle('database:getProjects', async () => {
       try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
         const projects = await this.databaseService.getProjects();
         return { success: true, data: projects };
       } catch (error) {
@@ -244,6 +255,9 @@ class ElectronApp {
 
     ipcMain.handle('database:getProject', async (event, projectId) => {
       try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
         const project = await this.databaseService.getProject(projectId);
         return { success: true, data: project };
       } catch (error) {
@@ -254,6 +268,9 @@ class ElectronApp {
 
     ipcMain.handle('database:updateProject', async (event, projectId, updates) => {
       try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
         const project = await this.databaseService.updateProject(projectId, updates);
         return { success: true, data: project };
       } catch (error) {
@@ -264,6 +281,9 @@ class ElectronApp {
 
     ipcMain.handle('database:deleteProject', async (event, projectId) => {
       try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
         await this.databaseService.deleteProject(projectId);
         return { success: true };
       } catch (error) {

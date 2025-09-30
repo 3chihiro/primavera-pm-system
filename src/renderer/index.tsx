@@ -7,6 +7,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { store } from '../store/store';
 import App from './App';
+import { setupMockElectronAPI } from '../utils/mockElectronAPI';
 
 // Material-UIのカスタムテーマ設定
 const theme = createTheme({
@@ -110,16 +111,20 @@ const theme = createTheme({
 // アプリケーションの初期化
 const initializeApp = async (): Promise<void> => {
   try {
-    // Electronの準備が完了するまで待機
+    // ブラウザ環境の場合、モックAPIをセットアップ
+    if (typeof window !== 'undefined' && !(window as any).electronAPI) {
+      console.log('ブラウザ環境で実行中 - モックElectron APIを使用');
+      setupMockElectronAPI();
+    }
+
+    // データベースの初期化
     if (typeof window !== 'undefined' && (window as any).electronAPI) {
-      // データベースの初期化
       const dbResult = await (window as any).electronAPI.database.initialize();
       if (!dbResult.success) {
         console.error('データベースの初期化に失敗しました:', dbResult.error);
+      } else {
+        console.log('データベースの初期化が完了しました');
       }
-    } else {
-      // ブラウザ環境での初期化
-      console.log('ブラウザ環境で実行中 - Electron APIを無効化');
     }
   } catch (error) {
     console.error('アプリケーションの初期化に失敗しました:', error);

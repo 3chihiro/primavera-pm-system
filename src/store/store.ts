@@ -17,24 +17,34 @@ export const store = configureStore({
       serializableCheck: {
         // Dateオブジェクトなどの非シリアライズ可能な値を許可
         ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE', 'app/setAppReady', 'project/fetchProjects/fulfilled'],
-        ignoredPaths: (path: string) => {
-          // Date関連のフィールドを全て無視
-          const dateFields = [
-            'startDate', 'endDate', 'createdAt', 'updatedAt',
-            'plannedStartDate', 'plannedEndDate', 'actualStartDate', 'actualEndDate'
-          ];
-
-          return dateFields.some(field => path.includes(field));
-        },
-        ignoredActionsPaths: (path: string) => {
-          // アクションのペイロード内のDate関連フィールドを無視
-          const dateFields = [
-            'startDate', 'endDate', 'createdAt', 'updatedAt',
-            'plannedStartDate', 'plannedEndDate', 'actualStartDate', 'actualEndDate'
-          ];
-
-          return dateFields.some(field => path.includes(field));
-        },
+        ignoredPaths: [
+          // Date関連のフィールドを全て無視（正規表現パターン）
+          /.*\.startDate$/,
+          /.*\.endDate$/,
+          /.*\.createdAt$/,
+          /.*\.updatedAt$/,
+          /.*\.plannedStartDate$/,
+          /.*\.plannedEndDate$/,
+          /.*\.actualStartDate$/,
+          /.*\.actualEndDate$/,
+          // 配列内のDateフィールドも無視
+          /.*\.\d+\.startDate$/,
+          /.*\.\d+\.endDate$/,
+          /.*\.\d+\.createdAt$/,
+          /.*\.\d+\.updatedAt$/,
+        ],
+        ignoredActionsPaths: [
+          // アクションペイロード内のDate関連フィールドを無視
+          'payload.startDate',
+          'payload.endDate',
+          'payload.createdAt',
+          'payload.updatedAt',
+          'payload.plannedStartDate',
+          'payload.plannedEndDate',
+          'payload.actualStartDate',
+          'payload.actualEndDate',
+          /payload\.\d+\..*Date$/,
+        ],
       },
     }),
   devTools: process.env.NODE_ENV !== 'production',
