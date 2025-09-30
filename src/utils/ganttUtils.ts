@@ -55,29 +55,35 @@ function generateDayTimelineHeader(start: Date, end: Date): TimelineHeader {
     yearWidth += dayWidth;
     monthWidth += dayWidth;
 
-    // 月が変わる時
-    if (month !== currentMonth || currentDate >= end) {
+    // 次の日に進める
+    const nextDate = addDays(currentDate, 1);
+    const isLastDay = nextDate > end;
+    const nextYear = nextDate.getFullYear();
+    const nextMonth = nextDate.getMonth();
+
+    // 月が変わる時、または最終日
+    if (nextMonth !== month || isLastDay) {
       level2.push({
         date: new Date(currentYear, currentMonth, 1),
         label: format(new Date(currentYear, currentMonth, 1), 'yyyy年M月', { locale: ja }),
         width: monthWidth
       });
       monthWidth = 0;
-      currentMonth = month;
     }
 
-    // 年が変わる時
-    if (year !== currentYear || currentDate >= end) {
+    // 年が変わる時、または最終日
+    if (nextYear !== year || isLastDay) {
       level1.push({
         date: new Date(currentYear, 0, 1),
         label: `${currentYear}年`,
         width: yearWidth
       });
       yearWidth = 0;
-      currentYear = year;
     }
 
-    currentDate = addDays(currentDate, 1);
+    currentDate = nextDate;
+    currentYear = nextYear;
+    currentMonth = nextMonth;
   }
 
   return { level1, level2, level3 };
