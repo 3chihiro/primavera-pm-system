@@ -95,6 +95,7 @@ export interface TimelineHeader {
   level1: TimelineCell[]; // 年
   level2: TimelineCell[]; // 月
   level3: TimelineCell[]; // 日
+  level4: TimelineCell[]; // 曜日
 }
 
 export interface TimelineCell {

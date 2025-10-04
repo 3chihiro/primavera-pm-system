@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { Box, Typography, Paper, Button, ButtonGroup } from '@mui/material';
 import { addDays, addMonths } from 'date-fns';
 import GanttTimeline from './GanttTimeline';
 import GanttTaskBar from './GanttTaskBar';
+import GanttGrid from './GanttGrid';
 import {
   GanttTask,
   TimeRange,
@@ -19,6 +20,11 @@ import { calculatePixelsPerDay, calculateVisibleTimeRange } from '../../utils/ga
 const GanttView: React.FC = () => {
   const [timeScale, setTimeScale] = useState<TimeScale>('day');
   const [zoomLevel, setZoomLevel] = useState(1);
+
+  // スクロール同期用のref
+  const timelineRef = useRef<HTMLDivElement>(null);
+  const taskAreaRef = useRef<HTMLDivElement>(null);
+  const wbsAreaRef = useRef<HTMLDivElement>(null);
 
   // ダミーデータ（テスト用）
   const dummyTasks: GanttTask[] = useMemo(() => {
@@ -97,6 +103,36 @@ const GanttView: React.FC = () => {
     console.log('Task double-clicked:', task.name);
   };
 
+  // スクロール同期ハンドラー
+  const handleTimelineScroll = (scrollLeft: number) => {
+    if (taskAreaRef.current) {
+      taskAreaRef.current.scrollLeft = scrollLeft;
+    }
+  };
+
+  const handleTaskAreaScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLDivElement;
+    const scrollLeft = target.scrollLeft;
+    const scrollTop = target.scrollTop;
+
+    // 水平スクロール同期
+    if (timelineRef.current) {
+      timelineRef.current.scrollLeft = scrollLeft;
+    }
+
+    // 垂直スクロール同期
+    if (wbsAreaRef.current) {
+      wbsAreaRef.current.scrollTop = scrollTop;
+    }
+  };
+
+  const handleWbsAreaScroll = (event: React.UIEvent<HTMLDivElement>) => {
+    const scrollTop = (event.target as HTMLDivElement).scrollTop;
+    if (taskAreaRef.current) {
+      taskAreaRef.current.scrollTop = scrollTop;
+    }
+  };
+
   const rowHeight = 50;
 
   return (
@@ -135,53 +171,135 @@ const GanttView: React.FC = () => {
       </Box>
 
       <Paper sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {/* タイムラインヘッダー */}
-        <GanttTimeline
-          timeRange={timeRange}
-          pixelsPerDay={pixelsPerDay}
-          timeScale={timeScale}
-        />
-
-        {/* タスクバー表示エリア */}
-        <Box
-          sx={{
-            flexGrow: 1,
-            overflowY: 'auto',
-            overflowX: 'auto',
-            position: 'relative',
-            backgroundColor: '#fafafa',
-          }}
-        >
-          {/* グリッド背景（将来的に追加） */}
+        {/* ヘッダー行: WBS列ヘッダー + タイムライン */}
+        <Box sx={{ display: 'flex', borderBottom: '2px solid #424242' }}>
+          {/* WBS列ヘッダー */}
           <Box
             sx={{
-              position: 'relative',
-              minHeight: `${dummyTasks.length * rowHeight}px`,
+              width: '250px',
+              minWidth: '250px',
+              backgroundColor: '#fafafa',
+              borderRight: '2px solid #424242',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 600,
+              fontSize: '14px',
+              padding: '8px',
+            }}
+          >
+            タスク名
+          </Box>
+
+          {/* タイムラインヘッダー */}
+          <Box ref={timelineRef} sx={{ flexGrow: 1, overflowX: 'hidden' }}>
+            <GanttTimeline
+              timeRange={timeRange}
+              pixelsPerDay={pixelsPerDay}
+              timeScale={timeScale}
+              onScroll={handleTimelineScroll}
+            />
+          </Box>
+        </Box>
+
+        {/* メイン表示エリア: WBS列 + ガントチャート */}
+        <Box sx={{ display: 'flex', flexGrow: 1, overflow: 'hidden' }}>
+          {/* WBS列（タスク名） */}
+          <Box
+            ref={wbsAreaRef}
+            onScroll={handleWbsAreaScroll}
+            sx={{
+              width: '250px',
+              minWidth: '250px',
+              borderRight: '2px solid #424242',
+              backgroundColor: '#ffffff',
+              overflowY: 'auto',
+              overflowX: 'hidden',
             }}
           >
             {dummyTasks.map((task, index) => (
               <Box
-                key={task.id}
+                key={`wbs-${task.id}`}
                 sx={{
-                  position: 'relative',
                   height: `${rowHeight}px`,
                   borderBottom: '1px solid #e0e0e0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0 12px',
+                  backgroundColor: '#ffffff',
                   '&:hover': {
                     backgroundColor: '#f5f5f5',
                   },
                 }}
               >
-                <GanttTaskBar
-                  task={task}
-                  timeRangeStart={timeRange.start}
-                  pixelsPerDay={pixelsPerDay}
-                  rowHeight={rowHeight}
-                  settings={settings}
-                  onTaskClick={handleTaskClick}
-                  onTaskDoubleClick={handleTaskDoubleClick}
-                />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: task.type === 'summary' ? 600 : 400,
+                    color: task.isCritical ? '#d32f2f' : '#333',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {task.name}
+                </Typography>
               </Box>
             ))}
+          </Box>
+
+          {/* ガントチャート表示エリア */}
+          <Box
+            ref={taskAreaRef}
+            onScroll={handleTaskAreaScroll}
+            sx={{
+              flexGrow: 1,
+              overflowY: 'auto',
+              overflowX: 'auto',
+              position: 'relative',
+              backgroundColor: '#fafafa',
+            }}
+          >
+            <Box
+              sx={{
+                position: 'relative',
+                minHeight: `${dummyTasks.length * rowHeight}px`,
+              }}
+            >
+              {/* グリッド背景 */}
+              <GanttGrid
+                timeRange={timeRange}
+                pixelsPerDay={pixelsPerDay}
+                rowHeight={rowHeight}
+                rowCount={dummyTasks.length}
+              />
+
+              {/* タスクバー */}
+              {dummyTasks.map((task, index) => (
+                <Box
+                  key={task.id}
+                  sx={{
+                    position: 'relative',
+                    height: `${rowHeight}px`,
+                    borderBottom: '1px solid #e0e0e0',
+                    zIndex: 10,
+                    '&:hover': {
+                      backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                    },
+                  }}
+                >
+                  <GanttTaskBar
+                    task={task}
+                    timeRangeStart={timeRange.start}
+                    pixelsPerDay={pixelsPerDay}
+                    rowHeight={rowHeight}
+                    settings={settings}
+                    onTaskClick={handleTaskClick}
+                    onTaskDoubleClick={handleTaskDoubleClick}
+                  />
+                </Box>
+              ))}
+            </Box>
           </Box>
         </Box>
 

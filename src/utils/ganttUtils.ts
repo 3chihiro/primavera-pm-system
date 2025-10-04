@@ -31,12 +31,22 @@ function generateDayTimelineHeader(start: Date, end: Date): TimelineHeader {
   const level1: TimelineCell[] = []; // 年
   const level2: TimelineCell[] = []; // 月
   const level3: TimelineCell[] = []; // 日
+  const level4: TimelineCell[] = []; // 曜日
 
   let currentDate = new Date(start);
   let currentYear = currentDate.getFullYear();
   let currentMonth = currentDate.getMonth();
   let yearWidth = 0;
   let monthWidth = 0;
+
+  // 祝日データを取得（複数年対応）
+  const years = new Set<number>();
+  let tempDate = new Date(start);
+  while (tempDate <= end) {
+    years.add(tempDate.getFullYear());
+    tempDate = addDays(tempDate, 365);
+  }
+  const holidays = Array.from(years).flatMap(y => getJapaneseHolidays(y));
 
   while (currentDate <= end) {
     const year = currentDate.getFullYear();
@@ -49,6 +59,17 @@ function generateDayTimelineHeader(start: Date, end: Date): TimelineHeader {
       label: format(currentDate, 'd', { locale: ja }),
       width: dayWidth,
       isWeekend: isWeekend(currentDate),
+      isHoliday: isHoliday(currentDate, holidays),
+      isToday: isSameDay(currentDate, new Date())
+    });
+
+    // 曜日レベル
+    level4.push({
+      date: new Date(currentDate),
+      label: format(currentDate, 'E', { locale: ja }), // 日、月、火、水、木、金、土
+      width: dayWidth,
+      isWeekend: isWeekend(currentDate),
+      isHoliday: isHoliday(currentDate, holidays),
       isToday: isSameDay(currentDate, new Date())
     });
 
@@ -86,7 +107,7 @@ function generateDayTimelineHeader(start: Date, end: Date): TimelineHeader {
     currentMonth = nextMonth;
   }
 
-  return { level1, level2, level3 };
+  return { level1, level2, level3, level4 };
 }
 
 /**
@@ -224,26 +245,71 @@ export function calculatePixelsPerDay(timeScale: TimeScale, zoomLevel: number): 
 }
 
 /**
- * デフォルトの日本の祝日を取得
+ * デフォルトの日本の祝日を取得（2024-2025年版）
  */
 export function getJapaneseHolidays(year: number): Date[] {
-  // 簡略化された祝日リスト（実際の実装では外部ライブラリを使用推奨）
-  return [
+  const holidays: Date[] = [];
+
+  // 固定祝日
+  holidays.push(
     new Date(year, 0, 1),   // 元日
     new Date(year, 1, 11),  // 建国記念の日
-    new Date(year, 2, 21),  // 春分の日（近似）
+    new Date(year, 1, 23),  // 天皇誕生日
     new Date(year, 3, 29),  // 昭和の日
     new Date(year, 4, 3),   // 憲法記念日
     new Date(year, 4, 4),   // みどりの日
     new Date(year, 4, 5),   // こどもの日
-    new Date(year, 6, 20),  // 海の日（近似）
     new Date(year, 7, 11),  // 山の日
-    new Date(year, 8, 21),  // 敬老の日（近似）
-    new Date(year, 8, 23),  // 秋分の日（近似）
-    new Date(year, 9, 12),  // スポーツの日（近似）
     new Date(year, 10, 3),  // 文化の日
-    new Date(year, 10, 23), // 勤労感謝の日
-  ];
+    new Date(year, 10, 23)  // 勤労感謝の日
+  );
+
+  // ハッピーマンデー（第n月曜日）
+  holidays.push(
+    getNthWeekday(year, 0, 1, 2),  // 成人の日（1月第2月曜日）
+    getNthWeekday(year, 6, 1, 3),  // 海の日（7月第3月曜日）
+    getNthWeekday(year, 8, 1, 3),  // 敬老の日（9月第3月曜日）
+    getNthWeekday(year, 9, 1, 2)   // スポーツの日（10月第2月曜日）
+  );
+
+  // 春分の日・秋分の日（近似計算）
+  holidays.push(
+    getShunbun(year),  // 春分の日
+    getShubun(year)    // 秋分の日
+  );
+
+  return holidays;
+}
+
+/**
+ * 指定月の第n曜日を取得
+ * @param year 年
+ * @param month 月（0-11）
+ * @param dayOfWeek 曜日（0=日曜, 1=月曜...）
+ * @param n 第n週
+ */
+function getNthWeekday(year: number, month: number, dayOfWeek: number, n: number): Date {
+  const firstDay = new Date(year, month, 1);
+  const firstDayOfWeek = firstDay.getDay();
+  const diff = (dayOfWeek - firstDayOfWeek + 7) % 7;
+  const date = 1 + diff + (n - 1) * 7;
+  return new Date(year, month, date);
+}
+
+/**
+ * 春分の日を計算（近似式）
+ */
+function getShunbun(year: number): Date {
+  const day = Math.floor(20.8431 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+  return new Date(year, 2, day);
+}
+
+/**
+ * 秋分の日を計算（近似式）
+ */
+function getShubun(year: number): Date {
+  const day = Math.floor(23.2488 + 0.242194 * (year - 1980) - Math.floor((year - 1980) / 4));
+  return new Date(year, 8, day);
 }
 
 /**

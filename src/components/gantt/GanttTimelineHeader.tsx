@@ -8,10 +8,11 @@ interface GanttTimelineHeaderProps {
 }
 
 /**
- * 3階層タイムラインヘッダーコンポーネント
+ * 4階層タイムラインヘッダーコンポーネント
  * Level 1: 年
  * Level 2: 月
  * Level 3: 日
+ * Level 4: 曜日
  */
 const GanttTimelineHeader: React.FC<GanttTimelineHeaderProps> = ({
   timeline,
@@ -23,12 +24,14 @@ const GanttTimelineHeader: React.FC<GanttTimelineHeaderProps> = ({
       1: 40,  // 年レベルの高さ
       2: 35,  // 月レベルの高さ
       3: 30,  // 日レベルの高さ
+      4: 28,  // 曜日レベルの高さ
     };
 
     const fontSize = {
       1: '14px',
       2: '13px',
       3: '12px',
+      4: '11px',
     };
 
     return (
@@ -115,6 +118,9 @@ const GanttTimelineHeader: React.FC<GanttTimelineHeaderProps> = ({
 
       {/* Level 3: 日 */}
       {renderTimelineLevel(timeline.level3, 3)}
+
+      {/* Level 4: 曜日 */}
+      {renderTimelineLevel(timeline.level4, 4)}
     </Box>
   );
 };

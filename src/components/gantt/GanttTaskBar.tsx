@@ -160,27 +160,7 @@ const GanttTaskBar: React.FC<GanttTaskBarProps> = ({
             />
           )}
 
-          {/* タスク名表示（幅が十分にある場合のみ） */}
-          {width > 100 && (
-            <Typography
-              sx={{
-                position: 'absolute',
-                left: 8,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                fontSize: '12px',
-                color: '#ffffff',
-                fontWeight: 500,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                maxWidth: `${width - 16}px`,
-                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-              }}
-            >
-              {task.name}
-            </Typography>
-          )}
+          {/* タスク名は左側のWBS列に表示するため、ここでは表示しない */}
         </Box>
 
         {/* サマリータスクの三角形マーカー */}
