@@ -15,7 +15,8 @@ import {
 } from '../../types/gantt';
 import { calculatePixelsPerDay, calculateVisibleTimeRange } from '../../utils/ganttUtils';
 import { RootState } from '../../store/store';
-import { calculateSchedule } from '../../store/slices/taskSlice';
+import { calculateSchedule, setTasks } from '../../store/slices/taskSlice';
+import { generateMockTasks } from '../../utils/mockData';
 
 /**
  * ガントチャート表示コンポーネント
@@ -35,6 +36,14 @@ const GanttView: React.FC = () => {
   const tasks = useSelector((state: RootState) => state.task.items);
   const currentProject = useSelector((state: RootState) => state.project.currentProject);
 
+  // 初回マウント時にモックデータを読み込む
+  useEffect(() => {
+    if (tasks.length === 0) {
+      const mockTasks = generateMockTasks('demo-project-1');
+      dispatch(setTasks(mockTasks));
+    }
+  }, []);
+
   // タスクをGanttTask型に変換
   const ganttTasks: GanttTask[] = useMemo(() => {
     return tasks.map((task) => ({
@@ -52,13 +61,24 @@ const GanttView: React.FC = () => {
 
   // CPMスケジューリング計算を実行
   const handleCalculateSchedule = () => {
-    if (!currentProject) {
-      console.warn('プロジェクトが選択されていません');
+    if (tasks.length === 0) {
+      alert('タスクがありません。まずタスクを追加してください。');
       return;
     }
 
-    const projectStartDate = new Date(currentProject.startDate);
+    // プロジェクト開始日を決定（現在のタスクの最早日付を使用）
+    const projectStartDate = currentProject?.startDate
+      ? new Date(currentProject.startDate)
+      : new Date();
+
+    console.log('CPMスケジューリング計算を開始...', {
+      taskCount: tasks.length,
+      projectStartDate
+    });
+
     dispatch(calculateSchedule({ projectStartDate }));
+
+    alert(`CPMスケジューリング計算が完了しました！\nタスク数: ${tasks.length}\nクリティカルパス: ${tasks.filter(t => t.cpm?.isCritical).length}件`);
   };
 
   // 時間範囲を計算
