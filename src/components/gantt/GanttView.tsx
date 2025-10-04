@@ -1,6 +1,8 @@
-import React, { useState, useMemo, useRef } from 'react';
-import { Box, Typography, Paper, Button, ButtonGroup } from '@mui/material';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Box, Typography, Paper, Button, ButtonGroup, IconButton, Tooltip } from '@mui/material';
+import { Calculate as CalculateIcon } from '@mui/icons-material';
 import { addDays, addMonths } from 'date-fns';
+import { useDispatch, useSelector } from 'react-redux';
 import GanttTimeline from './GanttTimeline';
 import GanttTaskBar from './GanttTaskBar';
 import GanttGrid from './GanttGrid';
@@ -12,12 +14,15 @@ import {
   GanttSettings,
 } from '../../types/gantt';
 import { calculatePixelsPerDay, calculateVisibleTimeRange } from '../../utils/ganttUtils';
+import { RootState } from '../../store/store';
+import { calculateSchedule } from '../../store/slices/taskSlice';
 
 /**
  * ガントチャート表示コンポーネント
  * タイムライン + タスクバーを統合表示
  */
 const GanttView: React.FC = () => {
+  const dispatch = useDispatch();
   const [timeScale, setTimeScale] = useState<TimeScale>('day');
   const [zoomLevel, setZoomLevel] = useState(1);
 
@@ -26,69 +31,48 @@ const GanttView: React.FC = () => {
   const taskAreaRef = useRef<HTMLDivElement>(null);
   const wbsAreaRef = useRef<HTMLDivElement>(null);
 
-  // ダミーデータ（テスト用）
-  const dummyTasks: GanttTask[] = useMemo(() => {
-    const today = new Date();
-    return [
-      {
-        id: '1',
-        name: 'プロジェクト計画',
-        startDate: today,
-        endDate: addDays(today, 10),
-        progress: 75,
-        type: 'task',
-        level: 0,
-        dependencies: [],
-        isCritical: false,
-      },
-      {
-        id: '2',
-        name: '要件定義',
-        startDate: addDays(today, 2),
-        endDate: addDays(today, 15),
-        progress: 50,
-        type: 'task',
-        level: 0,
-        dependencies: [],
-        isCritical: true,
-      },
-      {
-        id: '3',
-        name: 'マイルストーン：設計完了',
-        startDate: addDays(today, 20),
-        endDate: addDays(today, 20),
-        progress: 0,
-        type: 'milestone',
-        level: 0,
-        dependencies: [],
-      },
-      {
-        id: '4',
-        name: 'フェーズ1（サマリー）',
-        startDate: addDays(today, -5),
-        endDate: addDays(today, 30),
-        progress: 60,
-        type: 'summary',
-        level: 0,
-        dependencies: [],
-      },
-      {
-        id: '5',
-        name: '実装作業',
-        startDate: addDays(today, 25),
-        endDate: addDays(today, 45),
-        progress: 30,
-        type: 'task',
-        level: 0,
-        dependencies: [],
-      },
-    ];
-  }, []);
+  // Redux Storeからタスクデータとプロジェクト情報を取得
+  const tasks = useSelector((state: RootState) => state.task.items);
+  const currentProject = useSelector((state: RootState) => state.project.currentProject);
+
+  // タスクをGanttTask型に変換
+  const ganttTasks: GanttTask[] = useMemo(() => {
+    return tasks.map((task) => ({
+      id: task.id,
+      name: task.name,
+      startDate: new Date(task.plannedStartDate),
+      endDate: new Date(task.plannedEndDate),
+      progress: task.percentComplete,
+      type: task.type,
+      level: 0, // TODO: 階層レベルの計算
+      dependencies: task.dependencies.map((d) => d.predecessorId),
+      isCritical: task.cpm?.isCritical || false,
+    }));
+  }, [tasks]);
+
+  // CPMスケジューリング計算を実行
+  const handleCalculateSchedule = () => {
+    if (!currentProject) {
+      console.warn('プロジェクトが選択されていません');
+      return;
+    }
+
+    const projectStartDate = new Date(currentProject.startDate);
+    dispatch(calculateSchedule({ projectStartDate }));
+  };
 
   // 時間範囲を計算
   const timeRange: TimeRange = useMemo(() => {
-    return calculateVisibleTimeRange(dummyTasks, 15);
-  }, [dummyTasks]);
+    if (ganttTasks.length === 0) {
+      // デフォルトの時間範囲（今日から30日間）
+      const today = new Date();
+      return {
+        start: today,
+        end: addDays(today, 30),
+      };
+    }
+    return calculateVisibleTimeRange(ganttTasks, 15);
+  }, [ganttTasks]);
 
   // ピクセル/日を計算
   const pixelsPerDay = calculatePixelsPerDay(timeScale, zoomLevel);
@@ -140,34 +124,49 @@ const GanttView: React.FC = () => {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4">ガントチャート</Typography>
 
-        {/* タイムスケール切り替え */}
-        <ButtonGroup variant="outlined" size="small">
-          <Button
-            variant={timeScale === 'day' ? 'contained' : 'outlined'}
-            onClick={() => setTimeScale('day')}
-          >
-            日
-          </Button>
-          <Button
-            variant={timeScale === 'week' ? 'contained' : 'outlined'}
-            onClick={() => setTimeScale('week')}
-          >
-            週
-          </Button>
-          <Button
-            variant={timeScale === 'month' ? 'contained' : 'outlined'}
-            onClick={() => setTimeScale('month')}
-          >
-            月
-          </Button>
-        </ButtonGroup>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {/* CPMスケジューリング計算ボタン */}
+          <Tooltip title="CPMスケジューリング計算を実行">
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<CalculateIcon />}
+              onClick={handleCalculateSchedule}
+              size="small"
+            >
+              スケジュール計算
+            </Button>
+          </Tooltip>
 
-        {/* ズームコントロール */}
-        <ButtonGroup variant="outlined" size="small">
-          <Button onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.25))}>-</Button>
-          <Button disabled>ズーム: {Math.round(zoomLevel * 100)}%</Button>
-          <Button onClick={() => setZoomLevel(Math.min(2, zoomLevel + 0.25))}>+</Button>
-        </ButtonGroup>
+          {/* タイムスケール切り替え */}
+          <ButtonGroup variant="outlined" size="small">
+            <Button
+              variant={timeScale === 'day' ? 'contained' : 'outlined'}
+              onClick={() => setTimeScale('day')}
+            >
+              日
+            </Button>
+            <Button
+              variant={timeScale === 'week' ? 'contained' : 'outlined'}
+              onClick={() => setTimeScale('week')}
+            >
+              週
+            </Button>
+            <Button
+              variant={timeScale === 'month' ? 'contained' : 'outlined'}
+              onClick={() => setTimeScale('month')}
+            >
+              月
+            </Button>
+          </ButtonGroup>
+
+          {/* ズームコントロール */}
+          <ButtonGroup variant="outlined" size="small">
+            <Button onClick={() => setZoomLevel(Math.max(0.5, zoomLevel - 0.25))}>-</Button>
+            <Button disabled>ズーム: {Math.round(zoomLevel * 100)}%</Button>
+            <Button onClick={() => setZoomLevel(Math.min(2, zoomLevel + 0.25))}>+</Button>
+          </ButtonGroup>
+        </Box>
       </Box>
 
       <Paper sx={{ flexGrow: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -217,7 +216,7 @@ const GanttView: React.FC = () => {
               overflowX: 'hidden',
             }}
           >
-            {dummyTasks.map((task, index) => (
+            {ganttTasks.map((task, index) => (
               <Box
                 key={`wbs-${task.id}`}
                 sx={{
@@ -263,7 +262,7 @@ const GanttView: React.FC = () => {
             <Box
               sx={{
                 position: 'relative',
-                minHeight: `${dummyTasks.length * rowHeight}px`,
+                minHeight: `${ganttTasks.length * rowHeight}px`,
               }}
             >
               {/* グリッド背景 */}
@@ -271,11 +270,11 @@ const GanttView: React.FC = () => {
                 timeRange={timeRange}
                 pixelsPerDay={pixelsPerDay}
                 rowHeight={rowHeight}
-                rowCount={dummyTasks.length}
+                rowCount={ganttTasks.length}
               />
 
               {/* タスクバー */}
-              {dummyTasks.map((task, index) => (
+              {ganttTasks.map((task, index) => (
                 <Box
                   key={task.id}
                   sx={{
@@ -314,7 +313,7 @@ const GanttView: React.FC = () => {
           }}
         >
           <Typography variant="caption" color="text.secondary">
-            表示タスク数: {dummyTasks.length}
+            表示タスク数: {ganttTasks.length} | クリティカルパス: {ganttTasks.filter(t => t.isCritical).length}件
           </Typography>
           <Typography variant="caption" color="text.secondary">
             表示期間: {timeRange.start.toLocaleDateString('ja-JP')} 〜{' '}

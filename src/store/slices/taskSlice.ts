@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Task } from '../../types/task';
+import { calculateCPM, CPMResult } from '../../utils/cpmCalculator';
 
 interface TaskState {
   items: Task[];
@@ -114,7 +115,7 @@ const taskSlice = createSlice({
       const { movedTaskId, targetTaskId, position } = action.payload;
       const movedTask = state.items.find(t => t.id === movedTaskId);
       const targetTask = state.items.find(t => t.id === targetTaskId);
-      
+
       if (movedTask && targetTask) {
         switch (position) {
           case 'child':
@@ -126,6 +127,45 @@ const taskSlice = createSlice({
             break;
         }
         // TODO: WBSコード再計算とソート順更新ロジックを実装
+      }
+    },
+
+    // CPMスケジューリング計算を実行
+    calculateSchedule: (state, action: PayloadAction<{ projectStartDate: Date }>) => {
+      const { projectStartDate } = action.payload;
+
+      // Date型に変換（Reduxはシリアライズされた日付を扱うため）
+      const startDate = new Date(projectStartDate);
+
+      // CPM計算を実行
+      const cpmResults = calculateCPM(state.items, startDate);
+
+      // 計算結果を各タスクに反映
+      for (const result of cpmResults) {
+        const task = state.items.find(t => t.id === result.taskId);
+        if (task) {
+          task.cpm = {
+            earlyStart: result.earlyStart,
+            earlyFinish: result.earlyFinish,
+            lateStart: result.lateStart,
+            lateFinish: result.lateFinish,
+            totalFloat: result.totalFloat,
+            freeFloat: result.freeFloat,
+            isCritical: result.isCritical
+          };
+        }
+      }
+    },
+
+    // 個別タスクのCPM情報を更新
+    updateTaskCPM: (state, action: PayloadAction<{
+      taskId: string;
+      cpm: Task['cpm'];
+    }>) => {
+      const { taskId, cpm } = action.payload;
+      const task = state.items.find(t => t.id === taskId);
+      if (task) {
+        task.cpm = cpm;
       }
     },
   },
@@ -146,6 +186,8 @@ export const {
   setError,
   clearError,
   updateTaskHierarchy,
+  calculateSchedule,
+  updateTaskCPM,
 } = taskSlice.actions;
 
 export default taskSlice.reducer;
