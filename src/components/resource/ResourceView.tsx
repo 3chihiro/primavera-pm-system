@@ -42,6 +42,7 @@ import { Resource, ResourceType } from '../../types/resource';
 import ResourceDialog from './ResourceDialog';
 import ResourceHistogram from './ResourceHistogram';
 import ResourceUtilizationReport from './ResourceUtilizationReport';
+import ResourceLevelingDialog from './ResourceLevelingDialog';
 
 /**
  * リソース管理表示コンポーネント
@@ -52,6 +53,7 @@ const ResourceView: React.FC = () => {
   const { currentProject } = useSelector((state: RootState) => state.project);
   const [searchText, setSearchText] = useState(filter.search);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [levelingDialogOpen, setLevelingDialogOpen] = useState(false);
 
   // リソースタイプの日本語表示
   const getResourceTypeLabel = (type: ResourceType): string => {
@@ -263,13 +265,21 @@ const ResourceView: React.FC = () => {
       {/* ヘッダー */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">リソース管理</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleCreate}
-        >
-          新規リソース
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => setLevelingDialogOpen(true)}
+          >
+            リソースレベリング
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleCreate}
+          >
+            新規リソース
+          </Button>
+        </Box>
       </Box>
 
       {/* ツールバー */}
@@ -332,6 +342,16 @@ const ResourceView: React.FC = () => {
         resource={selectedResource}
         onClose={handleDialogClose}
         onSave={handleSave}
+      />
+
+      {/* リソースレベリングダイアログ */}
+      <ResourceLevelingDialog
+        open={levelingDialogOpen}
+        onClose={() => setLevelingDialogOpen(false)}
+        onApply={(adjustedTasks) => {
+          console.log('レベリング適用:', adjustedTasks);
+          // TODO: タスクの日付を更新
+        }}
       />
     </Box>
   );

@@ -107,6 +107,11 @@ const GanttTaskBar: React.FC<GanttTaskBarProps> = ({
           <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
             進捗: {task.progress}%
           </Typography>
+          {task.resources && task.resources.length > 0 && (
+            <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
+              リソース: {task.resources.map(r => r.name).join(', ')}
+            </Typography>
+          )}
         </Box>
       }
       arrow
