@@ -87,14 +87,40 @@
 - レスポンシブデザイン対応
 - リアルタイムデータ反映
 
+5. **タスクリソース割り当て機能**
+   - ✅ タスクリソース割り当てダイアログ (`src/components/resource/TaskResourceAssignmentDialog.tsx`)
+     - リソース選択機能
+     - 割り当て率の設定 (0-200%)
+     - 計画作業時間の自動計算
+     - 既存割り当ての編集・削除
+     - タスク別の内訳表示
+
+   - ✅ WBSビューへの統合 (`src/components/wbs/WBSView.tsx`)
+     - コンテキストメニューに「リソース割り当て」を追加
+     - ダイアログの呼び出し機能
+     - リソースアイコンの追加
+
+   - ✅ データベースサービス拡張 (`src/database/DatabaseService.ts`)
+     - `createTaskResourceAssignment()` - 割り当て作成
+     - `updateTaskResourceAssignment()` - 割り当て更新
+     - `deleteTaskResourceAssignment()` - 割り当て削除
+     - `getTaskResourceAssignments()` - 割り当て一覧取得
+
+   - ✅ IPCハンドラー追加 (`src/main/main.ts`)
+     - `database:createTaskResourceAssignment`
+     - `database:updateTaskResourceAssignment`
+     - `database:deleteTaskResourceAssignment`
+     - `database:getTaskResourceAssignments`
+
 #### Gitコミット
 - `1177115` - feat(sprint5): リソース管理機能の基本実装
 - `c8895ee` - feat(sprint5): リソースヒストグラムと使用率レポート機能の実装
+- `95565ad` - feat(sprint5): タスクリソース割り当て機能の実装
 
 #### 次の開発ステップ
-- タスクへのリソース割り当てUI
 - リソースレベリング機能
 - リソースカレンダー機能
+- ガントチャートへのリソース情報表示
 
 ### セッション 3: 2025年10月4日
 **開発内容**: Sprint 4 CPMスケジューリング機能の完全実装
