@@ -40,6 +40,8 @@ import {
 } from '../../store/slices/resourceSlice';
 import { Resource, ResourceType } from '../../types/resource';
 import ResourceDialog from './ResourceDialog';
+import ResourceHistogram from './ResourceHistogram';
+import ResourceUtilizationReport from './ResourceUtilizationReport';
 
 /**
  * リソース管理表示コンポーネント
@@ -47,6 +49,7 @@ import ResourceDialog from './ResourceDialog';
 const ResourceView: React.FC = () => {
   const dispatch = useDispatch();
   const { items, view, filter, selectedResource } = useSelector((state: RootState) => state.resource);
+  const { currentProject } = useSelector((state: RootState) => state.project);
   const [searchText, setSearchText] = useState(filter.search);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -225,29 +228,35 @@ const ResourceView: React.FC = () => {
     </TableContainer>
   );
 
-  // ヒストグラム表示（プレースホルダー）
-  const renderHistogramView = () => (
-    <Paper sx={{ padding: 3, textAlign: 'center', minHeight: 400 }}>
-      <Typography variant="h6" color="text.secondary" gutterBottom>
-        リソースヒストグラム
-      </Typography>
-      <Typography variant="body2" color="text.secondary">
-        リソースの時間別使用状況をグラフで表示します（実装予定）
-      </Typography>
-    </Paper>
-  );
+  // ヒストグラム表示
+  const renderHistogramView = () => {
+    if (!currentProject) {
+      return (
+        <Paper sx={{ padding: 3, textAlign: 'center', minHeight: 400 }}>
+          <Typography variant="body1" color="text.secondary">
+            プロジェクトを選択してください
+          </Typography>
+        </Paper>
+      );
+    }
 
-  // 使用率表示（プレースホルダー）
-  const renderUsageView = () => (
-    <Paper sx={{ padding: 3, textAlign: 'center', minHeight: 400 }}>
-      <Typography variant="h6" color="text.secondary" gutterBottom>
-        リソース使用率レポート
-      </Typography>
-      <Typography variant="body2" color="text.secondary">
-        リソースの使用率と効率性の詳細レポートを表示します（実装予定）
-      </Typography>
-    </Paper>
-  );
+    return <ResourceHistogram projectId={currentProject.id} />;
+  };
+
+  // 使用率表示
+  const renderUsageView = () => {
+    if (!currentProject) {
+      return (
+        <Paper sx={{ padding: 3, textAlign: 'center', minHeight: 400 }}>
+          <Typography variant="body1" color="text.secondary">
+            プロジェクトを選択してください
+          </Typography>
+        </Paper>
+      );
+    }
+
+    return <ResourceUtilizationReport projectId={currentProject.id} />;
+  };
 
   return (
     <Box sx={{ padding: 3 }}>

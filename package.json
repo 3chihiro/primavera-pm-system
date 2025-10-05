@@ -32,6 +32,7 @@
     "@electron-forge/maker-rpm": "^7.9.0",
     "@electron-forge/maker-squirrel": "^7.9.0",
     "@electron-forge/maker-zip": "^7.9.0",
+    "@types/recharts": "^1.8.29",
     "assert": "^2.1.0",
     "buffer": "^6.0.3",
     "concurrently": "^9.2.1",
@@ -72,6 +73,7 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.9.3",
     "react-virtualized": "^9.22.6",
+    "recharts": "^3.2.1",
     "typescript": "^5.9.2"
   }
 }
