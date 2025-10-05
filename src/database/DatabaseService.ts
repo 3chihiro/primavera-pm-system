@@ -455,6 +455,104 @@ export class DatabaseService {
     }
   }
 
+  // ==================== リソース割り当て関連操作 ====================
+
+  /**
+   * タスクリソース割り当て作成
+   */
+  public async createTaskResourceAssignment(
+    taskId: string,
+    resourceId: string,
+    allocation: number,
+    startDate: Date,
+    endDate: Date,
+    plannedWork: number
+  ): Promise<void> {
+    if (!this.db) {
+      throw new Error('データベースが初期化されていません');
+    }
+
+    const assignmentId = this.generateId();
+
+    const stmt = this.db.prepare(`
+      INSERT INTO task_resource_assignments (
+        id, task_id, resource_id, allocation, start_date, end_date,
+        planned_work, actual_work, remaining_work, cost, actual_cost
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      assignmentId,
+      taskId,
+      resourceId,
+      allocation,
+      startDate.toISOString(),
+      endDate.toISOString(),
+      plannedWork,
+      0, // actual_work
+      plannedWork, // remaining_work
+      0, // cost
+      0  // actual_cost
+    );
+  }
+
+  /**
+   * タスクリソース割り当て更新
+   */
+  public async updateTaskResourceAssignment(
+    taskId: string,
+    resourceId: string,
+    allocation: number,
+    plannedWork: number
+  ): Promise<void> {
+    if (!this.db) {
+      throw new Error('データベースが初期化されていません');
+    }
+
+    const stmt = this.db.prepare(`
+      UPDATE task_resource_assignments
+      SET allocation = ?, planned_work = ?, remaining_work = ?
+      WHERE task_id = ? AND resource_id = ?
+    `);
+
+    stmt.run(allocation, plannedWork, plannedWork, taskId, resourceId);
+  }
+
+  /**
+   * タスクリソース割り当て削除
+   */
+  public async deleteTaskResourceAssignment(
+    taskId: string,
+    resourceId: string
+  ): Promise<void> {
+    if (!this.db) {
+      throw new Error('データベースが初期化されていません');
+    }
+
+    const stmt = this.db.prepare(`
+      DELETE FROM task_resource_assignments
+      WHERE task_id = ? AND resource_id = ?
+    `);
+
+    stmt.run(taskId, resourceId);
+  }
+
+  /**
+   * タスクのリソース割り当て一覧取得
+   */
+  public async getTaskResourceAssignments(taskId: string): Promise<any[]> {
+    if (!this.db) {
+      throw new Error('データベースが初期化されていません');
+    }
+
+    const stmt = this.db.prepare(`
+      SELECT * FROM task_resource_assignments
+      WHERE task_id = ?
+    `);
+
+    return stmt.all(taskId);
+  }
+
   // ==================== ユーティリティメソッド ====================
 
   /**

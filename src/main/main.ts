@@ -356,6 +356,66 @@ class ElectronApp {
       }
     });
 
+    // リソース割り当て関連のIPCハンドラー
+    ipcMain.handle('database:createTaskResourceAssignment', async (event, taskId, resourceId, allocation, startDate, endDate, plannedWork) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        await this.databaseService.createTaskResourceAssignment(
+          taskId,
+          resourceId,
+          allocation,
+          new Date(startDate),
+          new Date(endDate),
+          plannedWork
+        );
+        return { success: true };
+      } catch (error) {
+        console.error('Failed to create task resource assignment:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('database:updateTaskResourceAssignment', async (event, taskId, resourceId, allocation, plannedWork) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        await this.databaseService.updateTaskResourceAssignment(taskId, resourceId, allocation, plannedWork);
+        return { success: true };
+      } catch (error) {
+        console.error('Failed to update task resource assignment:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('database:deleteTaskResourceAssignment', async (event, taskId, resourceId) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        await this.databaseService.deleteTaskResourceAssignment(taskId, resourceId);
+        return { success: true };
+      } catch (error) {
+        console.error('Failed to delete task resource assignment:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('database:getTaskResourceAssignments', async (event, taskId) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        const assignments = await this.databaseService.getTaskResourceAssignments(taskId);
+        return { success: true, data: assignments };
+      } catch (error) {
+        console.error('Failed to get task resource assignments:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
     // ファイルダイアログ表示
     ipcMain.handle('dialog:showSaveDialog', async (event, options) => {
       const result = await dialog.showSaveDialog(this.mainWindow!, options);

@@ -38,6 +38,7 @@ import {
   Schedule,
   Assignment,
   Flag,
+  People,
 } from '@mui/icons-material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -47,6 +48,7 @@ import { useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store/store';
 import { Task, TaskType, TaskStatus, TaskPriority, CreateTaskData, TaskHierarchy } from '../../types/task';
+import TaskResourceAssignmentDialog from '../resource/TaskResourceAssignmentDialog';
 
 /**
  * WBS（作業分解構造）表示コンポーネント
@@ -187,6 +189,8 @@ const WBSView: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<CreateTaskData | null>(null);
+  const [resourceDialogOpen, setResourceDialogOpen] = useState(false);
+  const [resourceAssignmentTask, setResourceAssignmentTask] = useState<Task | null>(null);
 
   // WBS階層データの生成
   const hierarchicalTasks = useMemo(() => {
@@ -608,6 +612,16 @@ const WBSView: React.FC = () => {
             <Edit sx={{ marginRight: 1 }} />
             編集
           </MenuItem>
+          <MenuItem onClick={() => {
+            if (selectedTask) {
+              setResourceAssignmentTask(selectedTask);
+              setResourceDialogOpen(true);
+              handleMenuClose();
+            }
+          }}>
+            <People sx={{ marginRight: 1 }} />
+            リソース割り当て
+          </MenuItem>
           <MenuItem onClick={() => selectedTask && handleAddTask(selectedTask)}>
             <AddCircle sx={{ marginRight: 1 }} />
             サブタスク追加
@@ -798,6 +812,20 @@ const WBSView: React.FC = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* リソース割り当てダイアログ */}
+        <TaskResourceAssignmentDialog
+          open={resourceDialogOpen}
+          task={resourceAssignmentTask}
+          onClose={() => {
+            setResourceDialogOpen(false);
+            setResourceAssignmentTask(null);
+          }}
+          onSave={(taskId, assignments) => {
+            console.log('リソース割り当て保存:', taskId, assignments);
+            // TODO: データベースに保存
+          }}
+        />
       </Box>
     </LocalizationProvider>
   );
