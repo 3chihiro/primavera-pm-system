@@ -1,9 +1,7 @@
-import * as electron from 'electron';
+import { app, BrowserWindow, Menu, dialog, ipcMain } from 'electron';
 import * as path from 'path';
 import { isDev } from '../utils/environment';
 import { DatabaseService } from '../database/DatabaseService';
-
-const { app, BrowserWindow, Menu, dialog, ipcMain } = electron;
 
 // セキュリティ向上のためのCSP設定
 const getCSPPolicy = () => {
@@ -288,6 +286,72 @@ class ElectronApp {
         return { success: true };
       } catch (error) {
         console.error('Failed to delete project:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // リソース関連のIPCハンドラー
+    ipcMain.handle('database:getProjectResources', async (event, projectId) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        const resources = await this.databaseService.getProjectResources(projectId);
+        return { success: true, data: resources };
+      } catch (error) {
+        console.error('Failed to fetch resources:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('database:createResource', async (event, projectId, resourceData) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        const resource = await this.databaseService.createResource(projectId, resourceData);
+        return { success: true, data: resource };
+      } catch (error) {
+        console.error('Failed to create resource:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('database:getResource', async (event, resourceId) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        const resource = await this.databaseService.getResource(resourceId);
+        return { success: true, data: resource };
+      } catch (error) {
+        console.error('Failed to fetch resource:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('database:updateResource', async (event, resourceId, updates) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        const resource = await this.databaseService.updateResource(resourceId, updates);
+        return { success: true, data: resource };
+      } catch (error) {
+        console.error('Failed to update resource:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('database:deleteResource', async (event, resourceId) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        await this.databaseService.deleteResource(resourceId);
+        return { success: true };
+      } catch (error) {
+        console.error('Failed to delete resource:', error);
         return { success: false, error: error.message };
       }
     });

@@ -259,13 +259,200 @@ export class DatabaseService {
     }
 
     const stmt = this.db.prepare(`
-      SELECT * FROM resources 
-      WHERE project_id = ? 
+      SELECT * FROM resources
+      WHERE project_id = ?
       ORDER BY code
     `);
 
     const rows = stmt.all(projectId);
     return rows.map(row => this.mapRowToResource(row));
+  }
+
+  /**
+   * リソース作成
+   */
+  public async createResource(projectId: string, data: CreateResourceData): Promise<Resource> {
+    if (!this.db) {
+      throw new Error('データベースが初期化されていません');
+    }
+
+    const resourceId = this.generateId();
+
+    const stmt = this.db.prepare(`
+      INSERT INTO resources (
+        id, project_id, code, name, type, category, description,
+        email, phone, department, standard_rate, overtime_rate, cost_per_use,
+        currency, max_units, skills_data, availability_data, is_active, notes
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    stmt.run(
+      resourceId,
+      projectId,
+      data.code,
+      data.name,
+      data.type,
+      data.category || '',
+      data.description || '',
+      data.email || null,
+      data.phone || null,
+      data.department || null,
+      data.standardRate || 0,
+      data.overtimeRate || 0,
+      data.costPerUse || 0,
+      data.currency || 'JPY',
+      data.maxUnits || 100,
+      JSON.stringify(data.skills || []),
+      JSON.stringify(data.availability || []),
+      data.isActive !== false ? 1 : 0,
+      data.notes || ''
+    );
+
+    const resource = await this.getResource(resourceId);
+    if (!resource) {
+      throw new Error('リソースの作成に失敗しました');
+    }
+
+    return resource;
+  }
+
+  /**
+   * リソース取得
+   */
+  public async getResource(resourceId: string): Promise<Resource | null> {
+    if (!this.db) {
+      throw new Error('データベースが初期化されていません');
+    }
+
+    const stmt = this.db.prepare('SELECT * FROM resources WHERE id = ?');
+    const row = stmt.get(resourceId);
+
+    return row ? this.mapRowToResource(row) : null;
+  }
+
+  /**
+   * リソース更新
+   */
+  public async updateResource(resourceId: string, data: UpdateResourceData): Promise<Resource> {
+    if (!this.db) {
+      throw new Error('データベースが初期化されていません');
+    }
+
+    const updateFields: string[] = [];
+    const values: any[] = [];
+
+    if (data.code !== undefined) {
+      updateFields.push('code = ?');
+      values.push(data.code);
+    }
+    if (data.name !== undefined) {
+      updateFields.push('name = ?');
+      values.push(data.name);
+    }
+    if (data.type !== undefined) {
+      updateFields.push('type = ?');
+      values.push(data.type);
+    }
+    if (data.category !== undefined) {
+      updateFields.push('category = ?');
+      values.push(data.category);
+    }
+    if (data.description !== undefined) {
+      updateFields.push('description = ?');
+      values.push(data.description);
+    }
+    if (data.email !== undefined) {
+      updateFields.push('email = ?');
+      values.push(data.email);
+    }
+    if (data.phone !== undefined) {
+      updateFields.push('phone = ?');
+      values.push(data.phone);
+    }
+    if (data.department !== undefined) {
+      updateFields.push('department = ?');
+      values.push(data.department);
+    }
+    if (data.standardRate !== undefined) {
+      updateFields.push('standard_rate = ?');
+      values.push(data.standardRate);
+    }
+    if (data.overtimeRate !== undefined) {
+      updateFields.push('overtime_rate = ?');
+      values.push(data.overtimeRate);
+    }
+    if (data.costPerUse !== undefined) {
+      updateFields.push('cost_per_use = ?');
+      values.push(data.costPerUse);
+    }
+    if (data.currency !== undefined) {
+      updateFields.push('currency = ?');
+      values.push(data.currency);
+    }
+    if (data.maxUnits !== undefined) {
+      updateFields.push('max_units = ?');
+      values.push(data.maxUnits);
+    }
+    if (data.skills !== undefined) {
+      updateFields.push('skills_data = ?');
+      values.push(JSON.stringify(data.skills));
+    }
+    if (data.availability !== undefined) {
+      updateFields.push('availability_data = ?');
+      values.push(JSON.stringify(data.availability));
+    }
+    if (data.isActive !== undefined) {
+      updateFields.push('is_active = ?');
+      values.push(data.isActive ? 1 : 0);
+    }
+    if (data.notes !== undefined) {
+      updateFields.push('notes = ?');
+      values.push(data.notes);
+    }
+
+    if (updateFields.length === 0) {
+      const resource = await this.getResource(resourceId);
+      if (!resource) {
+        throw new Error('リソースが見つかりません');
+      }
+      return resource;
+    }
+
+    updateFields.push('updated_at = CURRENT_TIMESTAMP');
+    values.push(resourceId);
+
+    const stmt = this.db.prepare(`
+      UPDATE resources SET ${updateFields.join(', ')} WHERE id = ?
+    `);
+
+    const result = stmt.run(...values);
+
+    if (result.changes === 0) {
+      throw new Error('リソースの更新に失敗しました');
+    }
+
+    const resource = await this.getResource(resourceId);
+    if (!resource) {
+      throw new Error('リソースの更新に失敗しました');
+    }
+
+    return resource;
+  }
+
+  /**
+   * リソース削除
+   */
+  public async deleteResource(resourceId: string): Promise<void> {
+    if (!this.db) {
+      throw new Error('データベースが初期化されていません');
+    }
+
+    const stmt = this.db.prepare('DELETE FROM resources WHERE id = ?');
+    const result = stmt.run(resourceId);
+
+    if (result.changes === 0) {
+      throw new Error('リソースの削除に失敗しました');
+    }
   }
 
   // ==================== ユーティリティメソッド ====================
