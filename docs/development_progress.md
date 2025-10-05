@@ -1,13 +1,100 @@
 # 開発進捗記録 - Primavera PM System
 
-## 📅 最新セッション: 2025年10月4日
-**セッション時間**: 約1.5時間
+## 📅 最新セッション: 2025年10月5日
+**セッション時間**: 約2時間
 **開発ブランチ**: `develop`
-**担当Sprint**: Sprint 4（CPMスケジューリング機能）- 完全完了 ✅
+**担当Sprint**: Sprint 5（リソース管理機能）- 進行中 🚀
 
 ---
 
 ## 📅 過去のセッション記録
+
+### セッション 4: 2025年10月5日
+**開発内容**: Sprint 5 リソース管理機能の実装
+
+#### 完了した作業 ✅
+
+1. **リソース管理基盤の構築**
+   - ✅ リソース一覧表示UI (`src/components/resource/ResourceView.tsx`)
+     - テーブル形式での表示
+     - 検索・フィルター機能
+     - 3種類のビュー切り替え（リスト/ヒストグラム/使用率）
+
+   - ✅ リソース作成・編集ダイアログ (`src/components/resource/ResourceDialog.tsx`)
+     - 基本情報入力（コード、名前、タイプ、カテゴリ）
+     - 連絡先情報（部署、メール、電話）
+     - コスト情報（標準単価、残業単価、使用コスト）
+     - 稼働情報（最大稼働率）
+     - スキル管理機能
+
+2. **リソース使用率分析機能**
+   - ✅ リソース使用率計算ユーティリティ (`src/utils/resourceCalculator.ts`)
+     - `generateResourceHistogram()` - ヒストグラム生成
+     - `calculateResourceUtilization()` - 使用率計算
+     - `generateResourceUtilizationSummary()` - サマリー生成
+     - 日次/週次/月次の期間対応
+     - 稼働日計算（土日除外）
+     - 期間按分計算による正確な使用率算出
+
+   - ✅ リソースヒストグラムコンポーネント (`src/components/resource/ResourceHistogram.tsx`)
+     - Rechartsによるグラフ表示
+     - テーブル表示切り替え
+     - 期間タイプ切り替え（日/週/月）
+     - 過負荷期間の可視化
+     - タスク別の時間内訳表示
+
+   - ✅ リソース使用率レポート (`src/components/resource/ResourceUtilizationReport.tsx`)
+     - 統計サマリーカード（平均利用率、過負荷数、最適数、低稼働数）
+     - 詳細テーブル表示
+     - 進捗バーによる可視化
+     - ステータスアイコン・ラベル
+     - 過負荷/低稼働アラート
+
+3. **データベース・IPC統合**
+   - ✅ データベースサービス拡張 (`src/database/DatabaseService.ts`)
+     - `createResource()` - リソース作成
+     - `getResource()` - リソース取得
+     - `updateResource()` - リソース更新
+     - `deleteResource()` - リソース削除
+     - `getProjectResources()` - プロジェクトのリソース一覧取得
+
+   - ✅ IPCハンドラー追加 (`src/main/main.ts`)
+     - `database:getProjectResources`
+     - `database:createResource`
+     - `database:getResource`
+     - `database:updateResource`
+     - `database:deleteResource`
+
+4. **外部ライブラリ追加**
+   - ✅ recharts - グラフ描画ライブラリ
+   - ✅ @types/recharts - 型定義
+
+#### 実装・更新したファイル
+- ✅ `src/components/resource/ResourceView.tsx`（更新）
+- ✅ `src/components/resource/ResourceDialog.tsx`（新規作成）
+- ✅ `src/components/resource/ResourceHistogram.tsx`（新規作成）
+- ✅ `src/components/resource/ResourceUtilizationReport.tsx`（新規作成）
+- ✅ `src/utils/resourceCalculator.ts`（新規作成）
+- ✅ `src/database/DatabaseService.ts`（更新）
+- ✅ `src/main/main.ts`（更新）
+
+#### 技術的特徴
+- Material-UIによる高品質なUI実装
+- Redux Storeとの完全統合
+- TypeScript型安全性の徹底
+- 4種類のリソースタイプ対応（人的、材料、コスト、設備）
+- 過負荷リソースの自動検出
+- レスポンシブデザイン対応
+- リアルタイムデータ反映
+
+#### Gitコミット
+- `1177115` - feat(sprint5): リソース管理機能の基本実装
+- `c8895ee` - feat(sprint5): リソースヒストグラムと使用率レポート機能の実装
+
+#### 次の開発ステップ
+- タスクへのリソース割り当てUI
+- リソースレベリング機能
+- リソースカレンダー機能
 
 ### セッション 3: 2025年10月4日
 **開発内容**: Sprint 4 CPMスケジューリング機能の完全実装
