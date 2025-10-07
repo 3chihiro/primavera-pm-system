@@ -1,15 +1,70 @@
 # 開発進捗記録 - Primavera PM System
 
-## 📅 最新セッション: 2025年10月7日
-**セッション時間**: 約1時間
+## 📅 最新セッション: 2025年10月7日（続き）
+**セッション時間**: 約2時間
 **開発ブランチ**: `develop`
-**担当Sprint**: Sprint 5（リソース管理機能）- ✅ 完了
+**担当Sprint**: Sprint 6（進捗管理・EVM機能）- 🚀 進行中
 
 ---
 
 ## 📅 過去のセッション記録
 
-### セッション 5: 2025年10月7日
+### セッション 6: 2025年10月7日（午後）
+**開発内容**: Sprint 6 進捗管理・EVM機能のUI実装
+
+#### 完了した作業 ✅
+
+1. **進捗入力UI**
+   - ✅ ProgressUpdateDialog.tsx: 進捗更新ダイアログ
+     - 進捗率スライダー（スケジュール進捗）
+     - 物理進捗率スライダー（EV計算用）
+     - 実績開始日・終了日の入力
+     - 残作業日数の入力
+     - 実コスト（AC）の入力
+     - 備考欄
+     - 更新プレビュー表示
+     - 自動ステータス判定
+     - Material-UI + @mui/x-date-pickers統合
+
+2. **ベースライン管理UI**
+   - ✅ BaselineDialog.tsx: ベースライン保存ダイアログ
+     - ベースライン名・説明の入力
+     - 現在のベースライン表示
+     - プロジェクトサマリー（タスク数、総工数、総予算等）
+     - タスクプレビュー（最初の5件）
+     - 保存時の警告メッセージ
+     - スナップショット機能
+
+3. **EVMトレンドグラフ**
+   - ✅ EVMTrendChart.tsx: EVMトレンドチャート
+     - Rechartsによる時系列グラフ
+     - PV/EV/ACの推移表示（金額モード）
+     - CPI/SPIの推移表示（指標モード）
+     - トグルボタンによる表示切り替え
+     - カスタムツールチップ
+     - 詳細な凡例と説明
+     - レスポンシブデザイン
+
+#### 実装・更新したファイル
+- ✅ [src/components/progress/ProgressUpdateDialog.tsx](src/components/progress/ProgressUpdateDialog.tsx)（新規作成）
+- ✅ [src/components/progress/BaselineDialog.tsx](src/components/progress/BaselineDialog.tsx)（新規作成）
+- ✅ [src/components/progress/EVMTrendChart.tsx](src/components/progress/EVMTrendChart.tsx)（新規作成）
+
+#### 技術的特徴
+- @mui/x-date-pickersによる日本語対応の日付入力
+- Sliderコンポーネントによる直感的な進捗率入力
+- Rechartsによる高品質なグラフ表示
+- レスポンシブデザインとモバイル対応
+- TypeScript型安全性の徹底
+- Material-UIテーマとの完全統合
+
+#### 次の開発ステップ
+- データベースサービスの拡張（ベースライン・進捗データのCRUD）
+- Redux Storeへの統合
+- メインダッシュボードへの組み込み
+- WBSビューからの進捗入力機能統合
+
+### セッション 5: 2025年10月7日（午前）
 **開発内容**: Sprint 5 ガントチャートリソース表示機能の完成
 
 #### 完了した作業 ✅
