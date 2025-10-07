@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Tooltip, Typography } from '@mui/material';
+import { Box, Tooltip, Typography, Chip } from '@mui/material';
+import { Person as PersonIcon } from '@mui/icons-material';
 import { GanttTask, GanttSettings } from '../../types/gantt';
 import { dateToX, calculateTaskWidth } from '../../utils/ganttUtils';
 import { format } from 'date-fns';
@@ -167,6 +168,31 @@ const GanttTaskBar: React.FC<GanttTaskBarProps> = ({
 
           {/* タスク名は左側のWBS列に表示するため、ここでは表示しない */}
         </Box>
+
+        {/* リソースインジケーター */}
+        {task.resources && task.resources.length > 0 && width > 40 && (
+          <Box
+            sx={{
+              position: 'absolute',
+              right: 4,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              borderRadius: '4px',
+              padding: '2px 4px',
+              fontSize: '10px',
+              fontWeight: 600,
+              color: '#555',
+              border: '1px solid rgba(0, 0, 0, 0.1)',
+            }}
+          >
+            <PersonIcon sx={{ fontSize: 12 }} />
+            <span>{task.resources.length}</span>
+          </Box>
+        )}
 
         {/* サマリータスクの三角形マーカー */}
         {isSummary && (

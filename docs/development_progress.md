@@ -1,13 +1,61 @@
 # 開発進捗記録 - Primavera PM System
 
-## 📅 最新セッション: 2025年10月5日
-**セッション時間**: 約2時間
+## 📅 最新セッション: 2025年10月7日
+**セッション時間**: 約1時間
 **開発ブランチ**: `develop`
-**担当Sprint**: Sprint 5（リソース管理機能）- 進行中 🚀
+**担当Sprint**: Sprint 5（リソース管理機能）- ✅ 完了
 
 ---
 
 ## 📅 過去のセッション記録
+
+### セッション 5: 2025年10月7日
+**開発内容**: Sprint 5 ガントチャートリソース表示機能の完成
+
+#### 完了した作業 ✅
+
+1. **ガントチャートリソース表示統合**
+   - ✅ GanttTask型定義にリソース情報を追加 ([src/types/gantt.ts](src/types/gantt.ts))
+     - resources配列プロパティの追加（id, name, allocation）
+
+   - ✅ GanttViewでリソース情報のマッピング ([src/components/gantt/GanttView.tsx](src/components/gantt/GanttView.tsx))
+     - Redux Storeからリソース情報を取得
+     - タスクに割り当てられたリソースをGanttTaskに統合
+     - useMemoによる効率的な再計算
+
+   - ✅ GanttTaskBarにリソースインジケーター追加 ([src/components/gantt/GanttTaskBar.tsx](src/components/gantt/GanttTaskBar.tsx))
+     - タスクバー右側にPersonアイコンとリソース数を表示
+     - タスクバー幅が40px以上の場合のみ表示
+     - ツールチップでリソース名一覧を表示
+     - 半透明背景で視認性確保
+
+#### 実装・更新したファイル
+- ✅ [src/types/gantt.ts](src/types/gantt.ts)（更新 - リソース情報追加）
+- ✅ [src/components/gantt/GanttView.tsx](src/components/gantt/GanttView.tsx)（更新 - リソースマッピング）
+- ✅ [src/components/gantt/GanttTaskBar.tsx](src/components/gantt/GanttTaskBar.tsx)（更新 - リソースインジケーター）
+
+#### 技術的特徴
+- リソース情報の一元管理（Redux Store）
+- ガントチャートとリソース管理の完全統合
+- リアルタイムデータ反映
+- 視覚的に分かりやすいリソース表示
+- パフォーマンスを考慮した条件付きレンダリング
+
+#### Sprint 5完了サマリー
+
+**実装された主要機能:**
+- ✅ リソース定義・管理UI
+- ✅ リソース使用率分析
+- ✅ リソースヒストグラム
+- ✅ タスクリソース割り当て
+- ✅ リソースレベリング
+- ✅ ガントチャートリソース表示
+
+**技術的成果:**
+- 包括的なリソース管理システムの完成
+- CPMスケジューリングとリソース管理の統合
+- データベース・IPC・Redux Storeの完全統合
+- Material-UI + Rechartsによる高品質なUI実装
 
 ### セッション 4: 2025年10月5日
 **開発内容**: Sprint 5 リソース管理機能の実装

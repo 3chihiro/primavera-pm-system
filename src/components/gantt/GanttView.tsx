@@ -32,9 +32,10 @@ const GanttView: React.FC = () => {
   const taskAreaRef = useRef<HTMLDivElement>(null);
   const wbsAreaRef = useRef<HTMLDivElement>(null);
 
-  // Redux Storeからタスクデータとプロジェクト情報を取得
+  // Redux Storeからタスクデータ、プロジェクト情報、リソース情報を取得
   const tasks = useSelector((state: RootState) => state.task.items);
   const currentProject = useSelector((state: RootState) => state.project.currentProject);
+  const resources = useSelector((state: RootState) => state.resource.items);
 
   // 初回マウント時にモックデータを読み込む
   useEffect(() => {
@@ -46,18 +47,37 @@ const GanttView: React.FC = () => {
 
   // タスクをGanttTask型に変換
   const ganttTasks: GanttTask[] = useMemo(() => {
-    return tasks.map((task) => ({
-      id: task.id,
-      name: task.name,
-      startDate: new Date(task.plannedStartDate),
-      endDate: new Date(task.plannedEndDate),
-      progress: task.percentComplete,
-      type: task.type,
-      level: 0, // TODO: 階層レベルの計算
-      dependencies: task.dependencies.map((d) => d.predecessorId),
-      isCritical: task.cpm?.isCritical || false,
-    }));
-  }, [tasks]);
+    return tasks.map((task) => {
+      // このタスクに割り当てられているリソースを取得
+      const taskResources = resources
+        .filter((resource) =>
+          resource.allocations.some((alloc) => alloc.taskId === task.id)
+        )
+        .map((resource) => {
+          const allocation = resource.allocations.find(
+            (alloc) => alloc.taskId === task.id
+          );
+          return {
+            id: resource.id,
+            name: resource.name,
+            allocation: allocation?.allocation || 0,
+          };
+        });
+
+      return {
+        id: task.id,
+        name: task.name,
+        startDate: new Date(task.plannedStartDate),
+        endDate: new Date(task.plannedEndDate),
+        progress: task.percentComplete,
+        type: task.type,
+        level: 0, // TODO: 階層レベルの計算
+        dependencies: task.dependencies.map((d) => d.predecessorId),
+        isCritical: task.cpm?.isCritical || false,
+        resources: taskResources.length > 0 ? taskResources : undefined,
+      };
+    });
+  }, [tasks, resources]);
 
   // CPMスケジューリング計算を実行
   const handleCalculateSchedule = () => {

@@ -31,6 +31,13 @@ export interface GanttTask {
 
   // 制約
   constraints?: TaskConstraint[];
+
+  // リソース情報
+  resources?: Array<{
+    id: string;
+    name: string;
+    allocation: number; // 割り当て率（%）
+  }>;
 }
 
 export interface TimeRange {
