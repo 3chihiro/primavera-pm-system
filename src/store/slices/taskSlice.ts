@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Task } from '../../types/task';
 import { calculateCPM, CPMResult } from '../../utils/cpmCalculator';
 
@@ -35,6 +35,22 @@ const initialState: TaskState = {
     direction: 'asc',
   },
 };
+
+// ===================== 非同期アクション =====================
+
+/**
+ * プロジェクトのタスク一覧取得
+ */
+export const fetchProjectTasks = createAsyncThunk(
+  'task/fetchProjectTasks',
+  async (projectId: string) => {
+    const result = await window.electronAPI.invoke('database:getProjectTasks', projectId);
+    if (!result.success) {
+      throw new Error(result.error);
+    }
+    return result.data as Task[];
+  }
+);
 
 const taskSlice = createSlice({
   name: 'task',
@@ -168,6 +184,21 @@ const taskSlice = createSlice({
         task.cpm = cpm;
       }
     },
+  },
+  extraReducers: (builder) => {
+    // fetchProjectTasks
+    builder.addCase(fetchProjectTasks.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
+    });
+    builder.addCase(fetchProjectTasks.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.items = action.payload;
+    });
+    builder.addCase(fetchProjectTasks.rejected, (state, action) => {
+      state.isLoading = false;
+      state.error = action.error.message || 'タスクの取得に失敗しました';
+    });
   },
 });
 

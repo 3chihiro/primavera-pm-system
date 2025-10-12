@@ -290,6 +290,20 @@ class ElectronApp {
       }
     });
 
+    // タスク関連のIPCハンドラー
+    ipcMain.handle('database:getProjectTasks', async (event, projectId) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        const tasks = await this.databaseService.getProjectTasks(projectId);
+        return { success: true, data: tasks };
+      } catch (error) {
+        console.error('Failed to fetch tasks:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
     // リソース関連のIPCハンドラー
     ipcMain.handle('database:getProjectResources', async (event, projectId) => {
       try {
@@ -412,6 +426,109 @@ class ElectronApp {
         return { success: true, data: assignments };
       } catch (error) {
         console.error('Failed to get task resource assignments:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // ベースライン関連のIPCハンドラー
+    ipcMain.handle('database:createBaseline', async (event, projectId, name, description, createdBy) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        const baseline = await this.databaseService.createBaseline(projectId, name, description, createdBy);
+        return { success: true, data: baseline };
+      } catch (error) {
+        console.error('Failed to create baseline:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('database:getBaseline', async (event, baselineId) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        const baseline = await this.databaseService.getBaseline(baselineId);
+        return { success: true, data: baseline };
+      } catch (error) {
+        console.error('Failed to get baseline:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('database:getProjectBaselines', async (event, projectId) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        const baselines = await this.databaseService.getProjectBaselines(projectId);
+        return { success: true, data: baselines };
+      } catch (error) {
+        console.error('Failed to get project baselines:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('database:deleteBaseline', async (event, baselineId) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        await this.databaseService.deleteBaseline(baselineId);
+        return { success: true };
+      } catch (error) {
+        console.error('Failed to delete baseline:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    // 進捗管理関連のIPCハンドラー
+    ipcMain.handle('database:updateTaskProgress', async (event, progressData) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        // Date型の変換
+        const parsedData = {
+          ...progressData,
+          actualStartDate: progressData.actualStartDate ? new Date(progressData.actualStartDate) : undefined,
+          actualEndDate: progressData.actualEndDate ? new Date(progressData.actualEndDate) : undefined,
+          updateDate: new Date(progressData.updateDate || Date.now()),
+        };
+        const task = await this.databaseService.updateTaskProgress(parsedData);
+        return { success: true, data: task };
+      } catch (error) {
+        console.error('Failed to update task progress:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('database:calculateProjectEVM', async (event, projectId, statusDate) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        const evmMetrics = await this.databaseService.calculateProjectEVM(
+          projectId,
+          statusDate ? new Date(statusDate) : new Date()
+        );
+        return { success: true, data: evmMetrics };
+      } catch (error) {
+        console.error('Failed to calculate project EVM:', error);
+        return { success: false, error: error.message };
+      }
+    });
+
+    ipcMain.handle('database:getTaskEVMData', async (event, taskId, baselineId) => {
+      try {
+        if (!this.databaseService) {
+          throw new Error('Database service not initialized');
+        }
+        const evmData = await this.databaseService.getTaskEVMData(taskId, baselineId);
+        return { success: true, data: evmData };
+      } catch (error) {
+        console.error('Failed to get task EVM data:', error);
         return { success: false, error: error.message };
       }
     });

@@ -49,6 +49,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store/store';
 import { Task, TaskType, TaskStatus, TaskPriority, CreateTaskData, TaskHierarchy } from '../../types/task';
 import TaskResourceAssignmentDialog from '../resource/TaskResourceAssignmentDialog';
+import ProgressUpdateDialog from '../progress/ProgressUpdateDialog';
+import { updateTaskProgress } from '../../store/slices/progressSlice';
 
 /**
  * WBS（作業分解構造）表示コンポーネント
@@ -190,6 +192,7 @@ const WBSView: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<CreateTaskData | null>(null);
   const [resourceDialogOpen, setResourceDialogOpen] = useState(false);
+  const [progressDialogOpen, setProgressDialogOpen] = useState(false);
   const [resourceAssignmentTask, setResourceAssignmentTask] = useState<Task | null>(null);
 
   // WBS階層データの生成
@@ -622,6 +625,15 @@ const WBSView: React.FC = () => {
             <People sx={{ marginRight: 1 }} />
             リソース割り当て
           </MenuItem>
+          <MenuItem onClick={() => {
+            if (selectedTask) {
+              setProgressDialogOpen(true);
+              handleMenuClose();
+            }
+          }}>
+            <Schedule sx={{ marginRight: 1 }} />
+            進捗更新
+          </MenuItem>
           <MenuItem onClick={() => selectedTask && handleAddTask(selectedTask)}>
             <AddCircle sx={{ marginRight: 1 }} />
             サブタスク追加
@@ -826,6 +838,41 @@ const WBSView: React.FC = () => {
             // TODO: データベースに保存
           }}
         />
+
+        {/* 進捗更新ダイアログ */}
+        {selectedTask && (
+          <ProgressUpdateDialog
+            open={progressDialogOpen}
+            task={selectedTask}
+            onClose={() => {
+              setProgressDialogOpen(false);
+            }}
+            onSave={async (progressData) => {
+              try {
+                await dispatch(updateTaskProgress(progressData)).unwrap();
+                // タスク一覧を更新（実際の実装ではReduxから取得するため自動更新される）
+                setTasks(prev => prev.map(t =>
+                  t.id === progressData.taskId
+                    ? {
+                        ...t,
+                        percentComplete: progressData.percentComplete,
+                        physicalPercentComplete: progressData.physicalPercentComplete,
+                        actualStartDate: progressData.actualStartDate,
+                        actualEndDate: progressData.actualEndDate,
+                        remainingDuration: progressData.remainingDuration,
+                        actualCost: progressData.actualCost,
+                        notes: progressData.notes || t.notes,
+                        updatedAt: new Date(),
+                      }
+                    : t
+                ));
+                setProgressDialogOpen(false);
+              } catch (error) {
+                console.error('進捗更新エラー:', error);
+              }
+            }}
+          />
+        )}
       </Box>
     </LocalizationProvider>
   );

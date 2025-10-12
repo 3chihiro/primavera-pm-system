@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store/store';
 import { fetchProjects } from '../../store/slices/projectSlice';
+import { calculateProjectEVM } from '../../store/slices/progressSlice';
 
 /**
  * ダッシュボードコンポーネント
@@ -34,15 +35,24 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   
-  const { projects, isLoading } = useSelector((state: RootState) => ({
+  const { projects, isLoading, projectEVM, currentProjectId } = useSelector((state: RootState) => ({
     projects: state.project.items,
     isLoading: state.project.isLoading,
+    projectEVM: state.progress.projectEVM,
+    currentProjectId: state.project.currentProject?.id,
   }));
 
   useEffect(() => {
     // ダッシュボード表示時にプロジェクト一覧を取得
     dispatch(fetchProjects());
   }, [dispatch]);
+
+  // 現在のプロジェクトのEVMを計算
+  useEffect(() => {
+    if (currentProjectId) {
+      dispatch(calculateProjectEVM({ projectId: currentProjectId }));
+    }
+  }, [currentProjectId, dispatch]);
 
   // 統計情報の計算
   const stats = React.useMemo(() => {
@@ -241,13 +251,74 @@ const Dashboard: React.FC = () => {
           </Paper>
         </Grid>
 
+        {/* EVMメトリクス */}
+        {projectEVM && currentProjectId && (
+          <Grid item xs={12} md={4}>
+            <Paper sx={{ padding: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                EVMメトリクス
+              </Typography>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    CPI（コスト効率指標）
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    color={projectEVM.cpi >= 1 ? 'success.main' : 'error.main'}
+                  >
+                    {projectEVM.cpi.toFixed(2)}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    SPI（スケジュール効率指標）
+                  </Typography>
+                  <Typography
+                    variant="h5"
+                    color={projectEVM.spi >= 1 ? 'success.main' : 'error.main'}
+                  >
+                    {projectEVM.spi.toFixed(2)}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    コスト差異（CV）
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    color={projectEVM.cv >= 0 ? 'success.main' : 'error.main'}
+                  >
+                    ¥{projectEVM.cv.toLocaleString()}
+                  </Typography>
+                </Box>
+
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    スケジュール差異（SV）
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    color={projectEVM.sv >= 0 ? 'success.main' : 'error.main'}
+                  >
+                    ¥{projectEVM.sv.toLocaleString()}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Grid>
+        )}
+
         {/* クイックアクション */}
         <Grid item xs={12} md={4}>
           <Paper sx={{ padding: 3 }}>
             <Typography variant="h6" gutterBottom>
               クイックアクション
             </Typography>
-            
+
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Button
                 variant="contained"
@@ -257,7 +328,7 @@ const Dashboard: React.FC = () => {
               >
                 新規プロジェクト作成
               </Button>
-              
+
               <Button
                 variant="outlined"
                 onClick={() => navigate('/projects')}

@@ -3,6 +3,7 @@ import appSlice from './slices/appSlice';
 import projectSlice from './slices/projectSlice';
 import taskSlice from './slices/taskSlice';
 import resourceSlice from './slices/resourceSlice';
+import progressSlice from './slices/progressSlice';
 
 // Redux Storeの設定
 export const store = configureStore({
@@ -11,6 +12,7 @@ export const store = configureStore({
     project: projectSlice,
     task: taskSlice,
     resource: resourceSlice,
+    progress: progressSlice,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

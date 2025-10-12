@@ -1,13 +1,113 @@
 # 開発進捗記録 - Primavera PM System
 
-## 📅 最新セッション: 2025年10月7日（続き）
-**セッション時間**: 約2時間
+## 📅 最新セッション: 2025年10月12日
+**セッション時間**: 約4時間
 **開発ブランチ**: `develop`
-**担当Sprint**: Sprint 6（進捗管理・EVM機能）- 🚀 進行中
+**担当Sprint**: Sprint 6（進捗管理・EVM機能）- ✅ **完全実装完了**
 
 ---
 
 ## 📅 過去のセッション記録
+
+### セッション 8: 2025年10月12日
+**開発内容**: Sprint 6 進捗管理・EVM機能の完全実装とバグ修正
+
+#### 完了した作業 ✅
+
+1. **データベースサービスの拡張**
+   - ✅ ベースライン管理（4メソッド）
+   - ✅ 進捗管理（3メソッド）
+   - ✅ タスク取得（1メソッド）
+   - ✅ 循環参照エラーの修正（getTask追加）
+
+2. **Redux Store統合**
+   - ✅ progressSlice作成（7つの非同期アクション）
+   - ✅ taskSlice拡張（fetchProjectTasks追加）
+   - ✅ store.ts統合（progressSlice追加）
+
+3. **UI実装**
+   - ✅ ProgressView専用画面（540行）
+     - EVMメトリクスカード（8種類）
+     - タブベースUI（トレンド/タスク/ベースライン）
+     - ベースライン管理統合
+   - ✅ Dashboard EVMメトリクス表示
+   - ✅ WBSView進捗入力統合
+   - ✅ ルーティング・ナビゲーション
+
+4. **IPCハンドラー追加**
+   - ✅ ベースライン関連（4ハンドラー）
+   - ✅ 進捗管理関連（3ハンドラー）
+   - ✅ タスク関連（1ハンドラー）
+
+5. **バグ修正**
+   - ✅ BaselineDialog.tsx: undefined tasks プロパティエラー修正
+     - tasks プロパティをオプション化（`tasks?: Task[]`）
+     - デフォルト値設定（`tasks = []`）
+     - オプショナルチェーンによる安全なアクセス
+     - onSave署名の簡素化
+   - ✅ ProgressView.tsx: BaselineDialogへのtasks prop渡し
+
+#### 実装・更新したファイル（11ファイル）
+- ✅ [src/types/baseline.ts](src/types/baseline.ts)（新規作成）
+- ✅ [src/database/DatabaseService.ts](src/database/DatabaseService.ts)（更新 - 8メソッド追加）
+- ✅ [src/main/main.ts](src/main/main.ts)（更新 - 8 IPCハンドラー追加）
+- ✅ [src/store/slices/progressSlice.ts](src/store/slices/progressSlice.ts)（新規作成 - 260行）
+- ✅ [src/store/slices/taskSlice.ts](src/store/slices/taskSlice.ts)（更新 - fetchProjectTasks追加）
+- ✅ [src/store/store.ts](src/store/store.ts)（更新 - progressSlice統合）
+- ✅ [src/components/dashboard/Dashboard.tsx](src/components/dashboard/Dashboard.tsx)（更新 - EVM表示）
+- ✅ [src/components/wbs/WBSView.tsx](src/components/wbs/WBSView.tsx)（更新 - 進捗更新統合）
+- ✅ [src/components/progress/ProgressView.tsx](src/components/progress/ProgressView.tsx)（新規作成 - 540行）
+- ✅ [src/renderer/App.tsx](src/renderer/App.tsx)（更新 - ルート追加）
+- ✅ [src/components/layout/Sidebar.tsx](src/components/layout/Sidebar.tsx)（更新 - メニュー追加）
+
+#### エラー修正詳細
+**問題**: BaselineDialogで「Cannot read properties of undefined (reading 'length')」エラー
+**原因**: ProgressViewがtasks propを渡していなかった
+**修正内容**:
+```typescript
+// BEFORE
+interface BaselineDialogProps {
+  tasks: Task[]; // 必須
+}
+
+// AFTER
+interface BaselineDialogProps {
+  tasks?: Task[]; // オプショナル
+}
+
+const BaselineDialog = ({ tasks = [], ... }) => { // デフォルト値
+  const totalTasks = tasks?.length || 0; // 安全なアクセス
+  // ...
+};
+```
+
+#### 技術的特徴
+- 完全なデータフロー: Database → IPC → Redux → UI
+- EVMアルゴリズム実装（PV/EV/AC/CPI/SPI/EAC/VAC/ETC/TCPI）
+- 型安全性とエラーハンドリングの徹底
+- オプショナルチェーンによる堅牢なコード
+- 業界標準EVM計算式の実装
+
+#### Sprint 6完了サマリー
+**実装された主要機能:**
+- ✅ ベースライン管理（スナップショット作成・表示）
+- ✅ 進捗入力UI（ダイアログベース）
+- ✅ EVM計算エンジン（全指標対応）
+- ✅ EVMトレンドグラフ（Recharts）
+- ✅ ダッシュボードEVM表示
+- ✅ WBS進捗入力統合
+- ✅ 専用ProgressView画面
+
+**技術的成果:**
+- 包括的な進捗管理システムの完成
+- プロジェクト管理のPMBOK準拠EVM実装
+- データベース・IPC・Redux Storeの完全統合
+- Material-UI + Rechartsによる高品質なUI実装
+- 型安全性とエラーハンドリングの徹底
+
+### セッション 7: 2025年10月12日（午前）
+
+### セッション 6: 2025年10月7日（午後）
 
 ### セッション 6: 2025年10月7日（午後）
 **開発内容**: Sprint 6 進捗管理・EVM機能のUI実装
@@ -481,18 +581,24 @@ git branch  # feature/sprint3-gantt-chart
 - ✅ **Sprint 2**: WBS・タスク管理機能
 - ✅ **Sprint 3**: ガントチャート機能（4階層タイムライン、休日表示、スクロール同期）
 - ✅ **Sprint 4**: CPMスケジューリング機能（クリティカルパス、フロート計算、制約条件）
+- ✅ **Sprint 5**: リソース管理機能（リソース定義、使用率分析、レベリング、ガントチャート統合）
+- ✅ **Sprint 6**: 進捗管理・EVM機能（ベースライン管理、EVM計算、トレンドグラフ、進捗入力）
 
 ### 次の開発Sprint
-- 🎯 **Sprint 5**: リソース管理機能
-- 📅 **Sprint 6**: 進捗管理・EVM機能
-- 📅 **Sprint 7**: レポート・エクスポート機能
+- 🎯 **Sprint 7**: レポート・エクスポート機能
+  - PDF/Excelエクスポート
+  - カスタムレポート生成
+  - プロジェクトテンプレート
+  - データインポート/エクスポート
 
 ### 主要な成果物
 - 完全動作するElectronアプリケーション
 - Oracle Primavera P6レベルのガントチャート
 - 本格的なCPMスケジューリングエンジン
+- 包括的なリソース管理システム
+- PMBOK準拠のEVM管理機能
 - 包括的な型定義システム
 - 効率的なアルゴリズム実装
 
 ---
-**次回継続時**: Sprint 5（リソース管理機能）の実装を開始してください。
+**次回継続時**: Sprint 7（レポート・エクスポート機能）の実装を開始してください。

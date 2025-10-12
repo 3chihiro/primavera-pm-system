@@ -18,6 +18,7 @@ import {
   Timeline,
   People,
   Assessment,
+  TrendingUp,
   ExpandLess,
   ExpandMore,
   Add,
@@ -209,6 +210,31 @@ const Sidebar: React.FC<SidebarProps> = ({ open }) => {
                         />
                       </ListItemIcon>
                       <ListItemText primary="リソース管理" />
+                    </ListItemButton>
+                  </ListItem>
+
+                  {/* 進捗管理・EVM */}
+                  <ListItem disablePadding>
+                    <ListItemButton
+                      sx={{ pl: 4 }}
+                      selected={isActive(`/projects/${currentProject.id}/progress`)}
+                      onClick={() =>
+                        handleNavigation(
+                          `/projects/${currentProject.id}/progress`,
+                          'progress'
+                        )
+                      }
+                    >
+                      <ListItemIcon>
+                        <TrendingUp
+                          color={
+                            isActive(`/projects/${currentProject.id}/progress`)
+                              ? 'primary'
+                              : 'inherit'
+                          }
+                        />
+                      </ListItemIcon>
+                      <ListItemText primary="進捗管理・EVM" />
                     </ListItemButton>
                   </ListItem>
 

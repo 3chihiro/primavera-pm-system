@@ -10,6 +10,7 @@ import ProjectDetail from '../components/project/ProjectDetail';
 import WBSView from '../components/wbs/WBSView';
 import GanttView from '../components/gantt/GanttView';
 import ResourceView from '../components/resource/ResourceView';
+import ProgressView from '../components/progress/ProgressView';
 import ReportsView from '../components/reports/ReportsView';
 import { setAppReady, setError, hideNotification } from '../store/slices/appSlice';
 import { AppDispatch, RootState } from '../store/store';
@@ -105,7 +106,10 @@ const App: React.FC = () => {
             
             {/* リソース管理 */}
             <Route path="/projects/:id/resources" element={<ResourceView />} />
-            
+
+            {/* 進捗管理・EVM */}
+            <Route path="/projects/:id/progress" element={<ProgressView />} />
+
             {/* レポート */}
             <Route path="/projects/:id/reports" element={<ReportsView />} />
           </Routes>

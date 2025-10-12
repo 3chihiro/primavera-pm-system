@@ -29,10 +29,11 @@ import { ja } from 'date-fns/locale';
 
 interface BaselineDialogProps {
   open: boolean;
-  tasks: Task[];
+  projectId: string;
+  tasks?: Task[];
   currentBaseline?: Baseline;
   onClose: () => void;
-  onSave: (baseline: Baseline) => void;
+  onSave: (name: string, description: string) => void;
 }
 
 /**
@@ -41,7 +42,8 @@ interface BaselineDialogProps {
  */
 const BaselineDialog: React.FC<BaselineDialogProps> = ({
   open,
-  tasks,
+  projectId,
+  tasks = [],
   currentBaseline,
   onClose,
   onSave,
@@ -55,56 +57,29 @@ const BaselineDialog: React.FC<BaselineDialogProps> = ({
       return;
     }
 
-    // 現在のタスク情報からベースラインタスクを作成
-    const baselineTasks: BaselineTask[] = tasks.map((task) => ({
-      id: `baseline-task-${task.id}-${Date.now()}`,
-      baselineId: '', // 後で設定
-      taskId: task.id,
-      startDate: new Date(task.plannedStartDate),
-      endDate: new Date(task.plannedEndDate),
-      duration: task.duration,
-      budgetedCost: task.budgetedCost || 0,
-    }));
-
-    const baseline: Baseline = {
-      id: `baseline-${Date.now()}`,
-      projectId: '', // 後で設定
-      name: name.trim(),
-      description: description.trim() || undefined,
-      createdAt: new Date(),
-      createdBy: 'current-user', // TODO: ユーザー情報を取得
-      tasks: baselineTasks,
-    };
-
-    // baselineIdを設定
-    baseline.tasks.forEach((t) => {
-      t.baselineId = baseline.id;
-    });
-
-    onSave(baseline);
+    onSave(name.trim(), description.trim());
     setName('');
     setDescription('');
-    onClose();
   };
 
   // 統計情報を計算
-  const totalTasks = tasks.length;
-  const totalDuration = tasks.reduce((sum, t) => sum + t.duration, 0);
-  const totalCost = tasks.reduce((sum, t) => sum + (t.budgetedCost || 0), 0);
-  const earliestStart = tasks.reduce(
+  const totalTasks = tasks?.length || 0;
+  const totalDuration = tasks?.reduce((sum, t) => sum + t.duration, 0) || 0;
+  const totalCost = tasks?.reduce((sum, t) => sum + (t.budgetedCost || 0), 0) || 0;
+  const earliestStart = tasks?.reduce(
     (earliest, t) =>
       !earliest || new Date(t.plannedStartDate) < earliest
         ? new Date(t.plannedStartDate)
         : earliest,
     null as Date | null
-  );
-  const latestEnd = tasks.reduce(
+  ) || null;
+  const latestEnd = tasks?.reduce(
     (latest, t) =>
       !latest || new Date(t.plannedEndDate) > latest
         ? new Date(t.plannedEndDate)
         : latest,
     null as Date | null
-  );
+  ) || null;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
