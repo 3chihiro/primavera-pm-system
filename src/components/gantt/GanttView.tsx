@@ -291,6 +291,7 @@ const GanttView: React.FC = () => {
           <Box
             ref={taskAreaRef}
             onScroll={handleTaskAreaScroll}
+            id="gantt-chart-container"
             sx={{
               flexGrow: 1,
               overflowY: 'auto',
