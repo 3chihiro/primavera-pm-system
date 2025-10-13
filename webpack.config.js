@@ -10,7 +10,8 @@ module.exports = (env, argv) => {
   entry: {
     main: './src/renderer/index.tsx'
   },
-  target: 'electron-renderer',
+  // ブラウザ互換のレンダラーバンドルを出力
+  target: 'web',
   devtool: isProduction ? false : 'cheap-module-source-map',
   module: {
     rules: [
@@ -70,9 +71,10 @@ module.exports = (env, argv) => {
     },
   },
   output: {
-    filename: '[name].js',
+    // Avoid clashing with Electron main bundle (also main.js)
+    filename: '[name].renderer.js',
     path: path.resolve(__dirname, 'dist'),
-    clean: true,
+    clean: false,
   },
   plugins: [
     new HtmlWebpackPlugin({

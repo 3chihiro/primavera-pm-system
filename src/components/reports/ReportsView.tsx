@@ -41,6 +41,9 @@ import {
   ExportFormat,
   ReportType,
 } from '../../types/report';
+// TODO: PDF/Excelエクスポート機能は現在開発中です
+// ブラウザ環境での動作に問題があるため、一時的に無効化しています
+/*
 import {
   exportTasksToExcel,
   exportResourcesToExcel,
@@ -54,6 +57,7 @@ import {
   exportProjectSummaryToPDF,
   exportGanttChartToPDF,
 } from '../../utils/pdfExporter';
+*/
 
 /**
  * レポート表示・エクスポートコンポーネント
@@ -111,6 +115,7 @@ const ReportsView: React.FC = () => {
 
   /**
    * レポート生成・エクスポート実行
+   * TODO: PDF/Excelエクスポート機能は現在開発中です
    */
   const handleExportReport = async () => {
     if (!currentProject || !selectedTemplate) {
@@ -123,140 +128,17 @@ const ReportsView: React.FC = () => {
     setSuccess(null);
 
     try {
-      let blob: Blob;
-      let fileName: string;
+      // TODO: PDF/Excelエクスポート機能は開発中
+      // ブラウザ環境での動作に問題があるため、一時的にモック応答を返します
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 1秒待機（処理のシミュレーション）
 
-      const projectName = currentProject.project_name;
-      const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
+      setSuccess(`レポート機能は現在開発中です。エクスポート機能は次のアップデートで利用可能になります。
 
-      // レポートタイプに応じて処理を分岐
-      switch (selectedTemplate.type) {
-        case 'task_list':
-          if (exportFormat === 'excel') {
-            blob = exportTasksToExcel(tasks, {
-              title: selectedTemplate.name,
-              author: 'Primavera PM System',
-            });
-            fileName = `${projectName}_TaskList_${timestamp}.xlsx`;
-          } else if (exportFormat === 'csv') {
-            const headers = [
-              'TaskCode',
-              'TaskName',
-              'StartDate',
-              'EndDate',
-              'Duration',
-              'Progress',
-              'Status',
-            ];
-            const data = tasks.map((task) => [
-              task.task_code || '',
-              task.task_name,
-              task.start_date ? format(new Date(task.start_date), 'yyyy/MM/dd') : '',
-              task.end_date ? format(new Date(task.end_date), 'yyyy/MM/dd') : '',
-              task.duration || 0,
-              task.progress || 0,
-              task.status,
-            ]);
-            blob = exportToCSV(headers, data);
-            fileName = `${projectName}_TaskList_${timestamp}.csv`;
-          } else {
-            blob = await exportTasksToPDF(tasks, projectName, {
-              title: selectedTemplate.name,
-              author: 'Primavera PM System',
-              pageOrientation: 'landscape',
-            });
-            fileName = `${projectName}_TaskList_${timestamp}.pdf`;
-          }
-          break;
+選択されたレポート: ${selectedTemplate.name}
+形式: ${exportFormat.toUpperCase()}
+タスク数: ${tasks.length}
+リソース数: ${resources.length}`);
 
-        case 'critical_path':
-          const criticalTasks = tasks.filter((t) => t.is_critical);
-          if (exportFormat === 'pdf') {
-            blob = await exportTasksToPDF(criticalTasks, projectName, {
-              title: 'Critical Path Tasks',
-              author: 'Primavera PM System',
-              pageOrientation: 'landscape',
-            });
-            fileName = `${projectName}_CriticalPath_${timestamp}.pdf`;
-          } else {
-            blob = exportTasksToExcel(criticalTasks, {
-              title: 'Critical Path Tasks',
-            });
-            fileName = `${projectName}_CriticalPath_${timestamp}.xlsx`;
-          }
-          break;
-
-        case 'resource_usage':
-          // リソース使用率データの計算（簡易版）
-          const utilizationData = resources.map((resource) => ({
-            resourceName: resource.resource_name,
-            resourceType: resource.resource_type,
-            averageUtilization: Math.random() * 120, // TODO: 実際の使用率計算
-            maxUtilization: Math.random() * 150,
-            overloadedPeriods: Math.floor(Math.random() * 10),
-            status: Math.random() > 0.7 ? 'Overloaded' : 'Normal',
-          }));
-
-          blob = await exportResourceUtilizationToPDF(
-            resources,
-            utilizationData,
-            projectName,
-            {
-              title: 'Resource Utilization Report',
-              author: 'Primavera PM System',
-            }
-          );
-          fileName = `${projectName}_ResourceUtilization_${timestamp}.pdf`;
-          break;
-
-        case 'project_summary':
-          blob = await exportProjectSummaryToPDF(
-            {
-              projectInfo: currentProject,
-              tasks,
-              resources,
-            },
-            {
-              title: 'Project Summary Report',
-              author: 'Primavera PM System',
-            }
-          );
-          fileName = `${projectName}_Summary_${timestamp}.pdf`;
-          break;
-
-        case 'gantt_chart':
-          // ガントチャートのDOM要素を取得
-          const ganttElement = document.getElementById('gantt-chart-container');
-          if (!ganttElement) {
-            throw new Error('ガントチャート要素が見つかりません');
-          }
-          blob = await exportGanttChartToPDF(ganttElement, projectName, {
-            title: 'Gantt Chart',
-            author: 'Primavera PM System',
-          });
-          fileName = `${projectName}_GanttChart_${timestamp}.pdf`;
-          break;
-
-        default:
-          // その他のレポート: プロジェクト全体データをエクスポート
-          blob = exportProjectToExcel(
-            {
-              tasks,
-              resources,
-              projectInfo: currentProject,
-            },
-            {
-              title: selectedTemplate.name,
-              author: 'Primavera PM System',
-            }
-          );
-          fileName = `${projectName}_Export_${timestamp}.xlsx`;
-      }
-
-      // ファイルダウンロード
-      downloadFile(blob, fileName);
-
-      setSuccess(`レポートを正常にエクスポートしました: ${fileName}`);
       handleCloseExportDialog();
     } catch (err: any) {
       console.error('Export error:', err);

@@ -2,14 +2,14 @@ import './polyfill'; // EventEmitter polyfill - must be first
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { store } from '../store/store';
 import App from './App';
 import { setupMockElectronAPI } from '../utils/mockElectronAPI';
 
-// Material-UIのカスタムテーマ設定
+// Material-UIのカスタムチE�Eマ設宁E
 const theme = createTheme({
   palette: {
     mode: 'light',
@@ -108,22 +108,22 @@ const theme = createTheme({
   },
 });
 
-// アプリケーションの初期化
+// アプリケーションの初期匁E
 const initializeApp = async (): Promise<void> => {
   try {
-    // ブラウザ環境の場合、モックAPIをセットアップ
+    // ブラウザ環墁E�E場合、モチE��APIをセチE��アチE�E
     if (typeof window !== 'undefined' && !(window as any).electronAPI) {
-      console.log('ブラウザ環境で実行中 - モックElectron APIを使用');
+      console.log('ブラウザ環墁E��実行中 - モチE��Electron APIを使用');
       setupMockElectronAPI();
     }
 
-    // データベースの初期化
+    // チE�Eタベ�Eスの初期匁E
     if (typeof window !== 'undefined' && (window as any).electronAPI) {
       const dbResult = await (window as any).electronAPI.database.initialize();
       if (!dbResult.success) {
-        console.error('データベースの初期化に失敗しました:', dbResult.error);
+        console.error('チE�Eタベ�Eスの初期化に失敗しました:', dbResult.error);
       } else {
-        console.log('データベースの初期化が完了しました');
+        console.log('チE�Eタベ�Eスの初期化が完亁E��ました');
       }
     }
   } catch (error) {
@@ -143,21 +143,30 @@ const renderApp = (): void => {
   root.render(
     <React.StrictMode>
       <Provider store={store}>
-        <BrowserRouter>
+        <HashRouter>
           <ThemeProvider theme={theme}>
             <CssBaseline />
             <App />
           </ThemeProvider>
-        </BrowserRouter>
+        </HashRouter>
       </Provider>
     </React.StrictMode>
   );
 };
 
-// DOM読み込み完了後にアプリケーションを初期化
-document.addEventListener('DOMContentLoaded', async () => {
-  await initializeApp();
-  renderApp();
-});
+// DOM読み込み完亁E��にアプリケーションを�E期化
+// �N���F��ɕ`�悵�A�������͕�����s�i�ҋ@�Ōł܂�Ȃ��悤�Ɂj
+const boot = () => {
+  try {
+    renderApp();
+    void initializeApp();
+  } catch (e) {
+    console.error('Boot error:', e);
+  }
+};
 
-// HMRは無効化（ブラウザ環境では問題を引き起こすため）
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}

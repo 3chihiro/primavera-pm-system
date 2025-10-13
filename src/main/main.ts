@@ -1,7 +1,7 @@
 import { app, BrowserWindow, Menu, dialog, ipcMain } from 'electron';
 import * as path from 'path';
 import { isDev } from '../utils/environment';
-import { DatabaseService } from '../database/DatabaseService';
+import { DatabaseService } from '../database/SafeDatabaseService';
 
 // セキュリティ向上のためのCSP設定
 const getCSPPolicy = () => {
@@ -16,10 +16,11 @@ const getCSPPolicy = () => {
       connect-src 'self' ws: wss: localhost:* 127.0.0.1:*;
     `.replace(/\s+/g, ' ').trim();
   } else {
-    // 本番環境では厳密なCSP
+    // 本番（file://）読み込み時のCSP。
+    // 外部スクリプト（同一ディレクトリ）と file: を許可。インラインは使っていないが、Electron の file スキームとの相性を考慮して緩めに設定。
     return `
-      default-src 'self';
-      script-src 'self';
+      default-src 'self' data: file:;
+      script-src 'self' 'unsafe-inline' file:;
       style-src 'self' 'unsafe-inline';
       img-src 'self' data: file:;
       font-src 'self' data:;

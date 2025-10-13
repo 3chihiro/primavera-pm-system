@@ -38,6 +38,11 @@ export interface GanttTask {
     name: string;
     allocation: number; // 割り当て率（%）
   }>;
+  // 中断・再開などの分割バー
+  segments?: Array<{
+    startDate: Date;
+    endDate: Date;
+  }>;
 }
 
 export interface TimeRange {
@@ -151,14 +156,15 @@ export interface RenderContext {
 
 // デフォルト設定
 export const DEFAULT_GANTT_COLORS: GanttColorScheme = {
-  taskBar: '#4CAF50',
-  progressBar: '#2E7D32',
+  // Spec alignment: planned = #0066CC, critical = #FF6600, late = handled in bar logic
+  taskBar: '#0066CC',
+  progressBar: '#2b5ea8',
   milestoneBar: '#FF9800',
-  summaryBar: '#2196F3',
-  criticalPath: '#F44336',
-  weekend: '#F5F5F5',
-  holiday: '#FFECB3',
-  today: '#FF5722',
+  summaryBar: '#1976D2',
+  criticalPath: '#FF6600',
+  weekend: '#D6DCE5',
+  holiday: '#D6DCE5',
+  today: '#FFE0B2',
   gridLines: '#E0E0E0',
   text: '#333333'
 };

@@ -65,15 +65,12 @@ const GanttGrid: React.FC<GanttGridProps> = ({
         // 休日・週末かどうか判定
         const isNonWorkingDay = column.isHoliday || column.isWeekend;
 
-        // 背景色の決定（優先度: 今日 > 祝日 > 週末）
-        let backgroundColor = 'transparent';
-        if (column.isToday) {
-          backgroundColor = 'rgba(255, 152, 0, 0.08)';
-        } else if (column.isHoliday) {
-          backgroundColor = 'rgba(244, 67, 54, 0.08)';
-        } else if (column.isWeekend) {
-          backgroundColor = 'rgba(158, 158, 158, 0.08)';
-        }
+        // 背景色の決定（仕様色: 休日/週末は #D6DCE5、今日を薄いオレンジで強調）
+        const backgroundColor = column.isToday
+          ? 'rgba(255, 152, 0, 0.15)'
+          : isNonWorkingDay
+          ? '#D6DCE5'
+          : 'transparent';
 
         return (
           <Box
@@ -83,7 +80,7 @@ const GanttGrid: React.FC<GanttGridProps> = ({
               minWidth: `${column.width}px`,
               height: '100%',
               backgroundColor,
-              borderRight: isNonWorkingDay ? '3px solid #d0d0d0' : '1px solid #e0e0e0',
+              borderRight: isNonWorkingDay ? '2px solid #c9ced7' : '1px solid #e0e0e0',
               position: 'relative',
             }}
           >
@@ -101,30 +98,7 @@ const GanttGrid: React.FC<GanttGridProps> = ({
                 }}
               />
             )}
-
-            {/* 休日には斜線パターンとマスクを追加してタスクバーを完全に隠す */}
-            {isNonWorkingDay && !column.isToday && (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  background: `
-                    repeating-linear-gradient(
-                      45deg,
-                      #f5f5f5,
-                      #f5f5f5 8px,
-                      #e0e0e0 8px,
-                      #e0e0e0 16px
-                    )
-                  `,
-                  zIndex: 1000,
-                  pointerEvents: 'none'
-                }}
-              />
-            )}
+            {/* 休日は単色背景のみ（Excel準拠イメージ） */}
           </Box>
         );
       })}

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Box, Typography, Paper, Button, ButtonGroup, IconButton, Tooltip } from '@mui/material';
-import { Calculate as CalculateIcon } from '@mui/icons-material';
+import { Calculate as CalculateIcon, DragIndicator } from '@mui/icons-material';
 import { addDays, addMonths } from 'date-fns';
 import { useDispatch, useSelector } from 'react-redux';
 import GanttTimeline from './GanttTimeline';
@@ -13,9 +13,10 @@ import {
   DEFAULT_GANTT_SETTINGS,
   GanttSettings,
 } from '../../types/gantt';
-import { calculatePixelsPerDay, calculateVisibleTimeRange } from '../../utils/ganttUtils';
+import { calculatePixelsPerDay, calculateVisibleTimeRange, computeDateBoundsForTask } from '../../utils/ganttUtils';
 import { RootState } from '../../store/store';
-import { calculateSchedule, setTasks } from '../../store/slices/taskSlice';
+import { calculateSchedule, setTasks, reorderTasks } from '../../store/slices/taskSlice';
+import { updateTask } from '../../store/slices/taskSlice';
 import { generateMockTasks } from '../../utils/mockData';
 
 /**
@@ -26,6 +27,10 @@ const GanttView: React.FC = () => {
   const dispatch = useDispatch();
   const [timeScale, setTimeScale] = useState<TimeScale>('day');
   const [zoomLevel, setZoomLevel] = useState(1);
+
+  // ドラッグ&ドロップ状態管理
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   // スクロール同期用のref
   const timelineRef = useRef<HTMLDivElement>(null);
@@ -119,6 +124,45 @@ const GanttView: React.FC = () => {
 
   const settings: GanttSettings = DEFAULT_GANTT_SETTINGS;
 
+  // 分割バー（簡易）
+  const [segmentsMap, setSegmentsMap] = useState<Record<string, Array<{ startDate: Date; endDate: Date }>>>({});
+
+  const handleTaskDateChange = (taskId: string, start: Date, end: Date) => {
+    const t = tasks.find(x => x.id === taskId);
+    if (!t) return;
+    const bounds = computeDateBoundsForTask(t, tasks as any);
+    let s = new Date(start);
+    let e = new Date(end);
+    if (bounds.minStart && s < bounds.minStart) s = bounds.minStart;
+    if (bounds.maxStart && s > bounds.maxStart) s = bounds.maxStart;
+    if (bounds.minEnd && e < bounds.minEnd) e = bounds.minEnd;
+    if (bounds.maxEnd && e > bounds.maxEnd) e = bounds.maxEnd;
+    if (e <= s) e = new Date(s.getTime() + 24 * 60 * 60 * 1000);
+    dispatch(updateTask({ id: taskId, plannedStartDate: s, plannedEndDate: e } as any));
+    // 依存・制約の再計算
+    dispatch(calculateSchedule({ projectStartDate: s }));
+  };
+
+  const handleTaskProgressChange = (taskId: string, progress: number) => {
+    dispatch(updateTask({ id: taskId, percentComplete: progress } as any));
+  };
+
+  const handleTaskSplit = (taskId: string, splitDate: Date) => {
+    const t = tasks.find(x => x.id === taskId);
+    if (!t) return;
+    const current = segmentsMap[taskId] || [{ startDate: new Date(t.plannedStartDate), endDate: new Date(t.plannedEndDate) }];
+    const next: Array<{ startDate: Date; endDate: Date }> = [];
+    for (const seg of current) {
+      if (splitDate > seg.startDate && splitDate < seg.endDate) {
+        next.push({ startDate: seg.startDate, endDate: new Date(splitDate) });
+        next.push({ startDate: new Date(splitDate), endDate: seg.endDate });
+      } else {
+        next.push(seg);
+      }
+    }
+    setSegmentsMap({ ...segmentsMap, [taskId]: next });
+  };
+
   const handleTaskClick = (task: GanttTask) => {
     console.log('Task clicked:', task.name);
   };
@@ -155,6 +199,63 @@ const GanttView: React.FC = () => {
     if (taskAreaRef.current) {
       taskAreaRef.current.scrollTop = scrollTop;
     }
+  };
+
+  // ドラッグ開始ハンドラー
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, taskId: string) => {
+    setDraggedTaskId(taskId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', taskId);
+
+    // ドラッグ中の要素にスタイルを追加
+    if (e.currentTarget) {
+      e.currentTarget.style.opacity = '0.5';
+    }
+  };
+
+  // ドラッグ終了ハンドラー
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    setDraggedTaskId(null);
+    setDragOverIndex(null);
+
+    // スタイルを元に戻す
+    if (e.currentTarget) {
+      e.currentTarget.style.opacity = '1';
+    }
+  };
+
+  // ドラッグオーバーハンドラー
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    if (draggedTaskId) {
+      setDragOverIndex(index);
+    }
+  };
+
+  // ドロップハンドラー
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, dropIndex: number) => {
+    e.preventDefault();
+
+    if (!draggedTaskId) return;
+
+    const draggedIndex = ganttTasks.findIndex(t => t.id === draggedTaskId);
+
+    if (draggedIndex === -1 || draggedIndex === dropIndex) {
+      setDraggedTaskId(null);
+      setDragOverIndex(null);
+      return;
+    }
+
+    // Reduxアクションで並び替えを実行
+    dispatch(reorderTasks({
+      fromIndex: draggedIndex,
+      toIndex: dropIndex,
+    }));
+
+    setDraggedTaskId(null);
+    setDragOverIndex(null);
   };
 
   const rowHeight = 50;
@@ -259,18 +360,40 @@ const GanttView: React.FC = () => {
             {ganttTasks.map((task, index) => (
               <Box
                 key={`wbs-${task.id}`}
+                draggable
+                onDragStart={(e) => handleDragStart(e, task.id)}
+                onDragEnd={handleDragEnd}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={(e) => handleDrop(e, index)}
                 sx={{
                   height: `${rowHeight}px`,
                   borderBottom: '1px solid #e0e0e0',
                   display: 'flex',
                   alignItems: 'center',
-                  padding: '0 12px',
-                  backgroundColor: '#ffffff',
+                  padding: '0 8px 0 4px',
+                  backgroundColor: dragOverIndex === index ? '#e3f2fd' : '#ffffff',
+                  cursor: 'move',
+                  transition: 'background-color 0.2s ease',
                   '&:hover': {
-                    backgroundColor: '#f5f5f5',
+                    backgroundColor: dragOverIndex === index ? '#e3f2fd' : '#f5f5f5',
+                    '& .drag-handle': {
+                      opacity: 1,
+                    },
                   },
+                  opacity: draggedTaskId === task.id ? 0.5 : 1,
+                  borderTop: dragOverIndex === index ? '2px solid #1976d2' : 'none',
                 }}
               >
+                <DragIndicator
+                  className="drag-handle"
+                  sx={{
+                    fontSize: 18,
+                    color: '#999',
+                    marginRight: 0.5,
+                    opacity: 0.3,
+                    transition: 'opacity 0.2s ease',
+                  }}
+                />
                 <Typography
                   variant="body2"
                   sx={{
@@ -318,25 +441,38 @@ const GanttView: React.FC = () => {
               {ganttTasks.map((task, index) => (
                 <Box
                   key={task.id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, task.id)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
                   sx={{
                     position: 'relative',
                     height: `${rowHeight}px`,
                     borderBottom: '1px solid #e0e0e0',
                     zIndex: 10,
+                    backgroundColor: dragOverIndex === index ? 'rgba(25, 118, 210, 0.08)' : 'transparent',
+                    transition: 'background-color 0.2s ease',
                     '&:hover': {
-                      backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                      backgroundColor: dragOverIndex === index ? 'rgba(25, 118, 210, 0.08)' : 'rgba(0, 0, 0, 0.02)',
                     },
+                    opacity: draggedTaskId === task.id ? 0.5 : 1,
+                    borderTop: dragOverIndex === index ? '2px solid #1976d2' : 'none',
+                    cursor: 'move',
                   }}
                 >
-                  <GanttTaskBar
-                    task={task}
-                    timeRangeStart={timeRange.start}
-                    pixelsPerDay={pixelsPerDay}
-                    rowHeight={rowHeight}
-                    settings={settings}
-                    onTaskClick={handleTaskClick}
-                    onTaskDoubleClick={handleTaskDoubleClick}
-                  />
+              <GanttTaskBar
+                task={{ ...task, segments: segmentsMap[task.id] }}
+                timeRangeStart={timeRange.start}
+                pixelsPerDay={pixelsPerDay}
+                rowHeight={rowHeight}
+                settings={settings}
+                onTaskClick={handleTaskClick}
+                onTaskDoubleClick={handleTaskDoubleClick}
+                onTaskDateChange={handleTaskDateChange}
+                onTaskProgressChange={handleTaskProgressChange}
+                onTaskSplit={handleTaskSplit}
+              />
                 </Box>
               ))}
             </Box>

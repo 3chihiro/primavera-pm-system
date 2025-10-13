@@ -153,6 +153,81 @@ export function calculateTaskWidth(startDate: Date, endDate: Date, pixelsPerDay:
 }
 
 /**
+ * 依存関係と制約を考慮した開始・終了日の最小/最大を計算
+ * 簡易版: 先行タスクの計画日付とラグのみを考慮
+ */
+export function computeDateBoundsForTask(
+  task: any,
+  allTasks: any[]
+): { minStart?: Date; minEnd?: Date; maxStart?: Date; maxEnd?: Date } {
+  let minStart: Date | undefined;
+  let minEnd: Date | undefined;
+  let maxStart: Date | undefined;
+  let maxEnd: Date | undefined;
+
+  // 依存関係（FS/SS/FF/SF + lag）
+  if (task.dependencies && task.dependencies.length > 0) {
+    for (const dep of task.dependencies) {
+      const pred = allTasks.find((t) => t.id === dep.predecessorId);
+      if (!pred) continue;
+      const lagMs = (dep.lag || 0) * 24 * 60 * 60 * 1000;
+      switch (dep.type) {
+        case 'FS': {
+          const s = new Date(new Date(pred.plannedEndDate).getTime() + lagMs);
+          minStart = !minStart || s > minStart ? s : minStart;
+          break;
+        }
+        case 'SS': {
+          const s = new Date(new Date(pred.plannedStartDate).getTime() + lagMs);
+          minStart = !minStart || s > minStart ? s : minStart;
+          break;
+        }
+        case 'FF': {
+          const e = new Date(new Date(pred.plannedEndDate).getTime() + lagMs);
+          minEnd = !minEnd || e > minEnd ? e : minEnd;
+          break;
+        }
+        case 'SF': {
+          const e = new Date(new Date(pred.plannedStartDate).getTime() + lagMs);
+          minEnd = !minEnd || e > minEnd ? e : minEnd;
+          break;
+        }
+      }
+    }
+  }
+
+  // 制約（MSO/MFO/SNET/SNLT/FNET/FNLT）
+  if (task.constraints && task.constraints.length > 0) {
+    for (const c of task.constraints) {
+      switch (c.type) {
+        case 'MSO':
+          minStart = c.date;
+          maxStart = c.date;
+          break;
+        case 'MFO':
+          minEnd = c.date;
+          maxEnd = c.date;
+          break;
+        case 'SNET': // Start No Earlier Than
+          minStart = !minStart || c.date > minStart ? c.date : minStart;
+          break;
+        case 'SNLT': // Start No Later Than
+          maxStart = !maxStart || c.date < maxStart ? c.date : maxStart;
+          break;
+        case 'FNET':
+          minEnd = !minEnd || c.date > minEnd ? c.date : minEnd;
+          break;
+        case 'FNLT':
+          maxEnd = !maxEnd || c.date < maxEnd ? c.date : maxEnd;
+          break;
+      }
+    }
+  }
+
+  return { minStart, minEnd, maxStart, maxEnd };
+}
+
+/**
  * 休日かどうかを判定
  */
 export function isHoliday(date: Date, holidays: Date[]): boolean {

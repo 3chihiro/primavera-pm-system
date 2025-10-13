@@ -4,8 +4,10 @@ import { app } from 'electron';
 /**
  * 開発環境かどうかを判定するユーティリティ関数
  */
+// Electronの開発サーバー（webpack dev server）を使う場合のみ true
+// npm start（ビルド→ファイル読み込み）では false にして dist/index.html を読む
 export const isDev = (): boolean => {
-  return process.env.NODE_ENV === 'development' || !app.isPackaged;
+  return process.env.ELECTRON_DEV_SERVER === 'true';
 };
 
 /**

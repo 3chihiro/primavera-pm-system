@@ -146,6 +146,29 @@ const taskSlice = createSlice({
       }
     },
 
+    // タスクの順序を並び替え
+    reorderTasks: (state, action: PayloadAction<{
+      fromIndex: number;
+      toIndex: number;
+    }>) => {
+      const { fromIndex, toIndex } = action.payload;
+
+      if (fromIndex < 0 || toIndex < 0 || fromIndex >= state.items.length || toIndex >= state.items.length) {
+        return;
+      }
+
+      // 配列を再配置
+      const newItems = [...state.items];
+      const [removed] = newItems.splice(fromIndex, 1);
+      newItems.splice(toIndex, 0, removed);
+
+      // sortOrderを更新
+      state.items = newItems.map((task, index) => ({
+        ...task,
+        sortOrder: index + 1,
+      }));
+    },
+
     // CPMスケジューリング計算を実行
     calculateSchedule: (state, action: PayloadAction<{ projectStartDate: Date }>) => {
       const { projectStartDate } = action.payload;
@@ -217,6 +240,7 @@ export const {
   setError,
   clearError,
   updateTaskHierarchy,
+  reorderTasks,
   calculateSchedule,
   updateTaskCPM,
 } = taskSlice.actions;

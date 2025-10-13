@@ -4,9 +4,9 @@
   "description": "Oracle Primavera P6風デスクトップ専用プロジェクト管理システム",
   "main": "dist/main.js",
   "scripts": {
-    "start": "npm run build:electron && electron .",
-    "dev": "webpack serve --mode=development",
-    "build": "npm run build:main && npm run build:preload && npm run build:renderer",
+    "start": "npm run build && electron .",
+    "dev": "cross-env ELECTRON_DEV_SERVER=true webpack serve --mode=development",
+    "build": "npm run build:renderer && npm run build:main && npm run build:preload",
     "build:main": "webpack --config webpack.main.config.js --mode=production",
     "build:preload": "webpack --config webpack.preload.config.js --mode=production",
     "build:renderer": "webpack --mode=production",
