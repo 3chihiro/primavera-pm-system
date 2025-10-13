@@ -58,6 +58,10 @@ module.exports = (env, argv) => {
       "crypto": false,
       "events": require.resolve("events"),
       "util": require.resolve("util"),
+      "stream": require.resolve("stream-browserify"),
+      "buffer": require.resolve("buffer"),
+      "process": require.resolve("process/browser.js"),
+      "module": false,
     },
   },
   output: {
@@ -75,6 +79,8 @@ module.exports = (env, argv) => {
     }),
     new webpack.ProvidePlugin({
       EventEmitter: ['events', 'EventEmitter'],
+      Buffer: ['buffer', 'Buffer'],
+      process: 'process/browser.js',
     }),
   ],
   devServer: {
