@@ -42,7 +42,7 @@ module.exports = (env, argv) => {
     ],
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: ['.tsx', '.ts', '.js', '.mjs', '.json'],
     alias: {
       '@': path.resolve(__dirname, 'src'),
       '@/components': path.resolve(__dirname, 'src/components'),
@@ -55,13 +55,18 @@ module.exports = (env, argv) => {
     fallback: {
       "fs": false,
       "path": require.resolve("path-browserify"),
-      "crypto": false,
-      "events": require.resolve("events"),
-      "util": require.resolve("util"),
+      "crypto": require.resolve("crypto-browserify"),
       "stream": require.resolve("stream-browserify"),
       "buffer": require.resolve("buffer"),
       "process": require.resolve("process/browser.js"),
+      "util": require.resolve("util"),
+      "assert": require.resolve("assert"),
+      "events": require.resolve("events"),
       "module": false,
+      "child_process": false,
+      "net": false,
+      "tls": false,
+      "os": false,
     },
   },
   output: {
@@ -75,12 +80,12 @@ module.exports = (env, argv) => {
       filename: 'index.html',
     }),
     new webpack.DefinePlugin({
-      global: 'globalThis',
+      'process.env.NODE_ENV': JSON.stringify(argv.mode || 'development'),
+      'global': 'globalThis',
     }),
     new webpack.ProvidePlugin({
-      EventEmitter: ['events', 'EventEmitter'],
-      Buffer: ['buffer', 'Buffer'],
       process: 'process/browser.js',
+      Buffer: ['buffer', 'Buffer'],
     }),
   ],
   devServer: {
