@@ -33,7 +33,8 @@ module.exports = {
     __filename: false,
   },
   externals: {
-    'better-sqlite3': 'commonjs better-sqlite3',
-    'electron': 'commonjs electron',
+    'better-sqlite3': 'commonjs2 better-sqlite3',
+    'electron': 'commonjs2 electron',
   },
+  externalsType: 'commonjs2',
 };

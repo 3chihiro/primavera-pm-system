@@ -51,5 +51,22 @@ tmp/
 temp/
 nul
 
+# Electron / electron-builder
+release/
+*.exe
+*.dmg
+*.app
+*.blockmap
+*.yml
+win-unpacked/
+mac/
+linux-unpacked/
+
+# Test files
+test-electron.js
+
+# Package lock
+package-lock.json
+
 # Claude Code settings
 .claude/settings.local.json
